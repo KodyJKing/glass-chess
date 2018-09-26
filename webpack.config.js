@@ -4,7 +4,7 @@ const webroot = path.join(__dirname, 'www')
 const BundleAnalyzer = require("webpack-bundle-analyzer").BundleAnalyzerPlugin
 
 const config = {
-    entry: './lib/main.js',
+    entry: './lib/app/main.js',
     output: {
         path: webroot,
         filename: 'index.js'
