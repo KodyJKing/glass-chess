@@ -1,0 +1,24 @@
+{
+    "name": "glass-chess",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "dev": "npm link glass && yarn install && yarn build",
+        "start": "node lib/app/server/main.js",
+        "build": "tsc && webpack --mode=production",
+        "clean": "rm -rf lib node_modules",
+        "watch": "tsc -w & webpack-dev-server --mode=development & ava -w",
+        "watchWin": "concurrently \"tsc -w\" \"webpack-dev-server --mode=development\" \"ava -w\""
+    },
+    "author": "KJK",
+    "license": "MIT",
+    "devDependencies": {
+        "typescript": "^3.0.1",
+        "webpack": "^4.17.1",
+        "webpack-bundle-analyzer": "^3.0.2",
+        "webpack-cli": "^3.1.0",
+        "webpack-dev-server": "^3.1.5",
+        "ava": "^0.25.0"
+    }
+}

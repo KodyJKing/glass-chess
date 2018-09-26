@@ -1,0 +1,33 @@
+{
+    "defaultSeverity": "error",
+    "extends": [
+        "tslint:recommended"
+    ],
+    "rules": {
+        "no-console": false,
+        "forin": false,
+        "no-empty": false,
+        "no-trailing-whitespace": false,
+        "prefer-const": false,
+        "ordered-imports": false,
+        "arrow-parens": false,
+        "trailing-comma": false,
+        "one-line": [true, "check-catch", "check-else", "check-finally"],
+        "one-variable-per-declaration": true,
+        "member-access": false,
+        "max-line-length": false,
+        "object-literal-sort-keys": false,
+        "no-empty-interface": false,
+        "interface-name": false,
+        "member-ordering": false,
+        "only-arrow-functions": false,
+        "interface-over-type-literal": false,
+        "no-unused-expression": false,
+        "max-classes-per-file": false,
+        "eofline": false,
+        "semicolon": [true, "never"],
+        "curly": false
+    },
+    "rulesDirectory": [],
+    "quotemark": [true, "single"]
+}
