@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "dev": "npm link glass && yarn install && yarn build",
+        "dev": " yarn install && npm link glass && yarn build",
         "start": "node lib/app/server/main.js",
         "build": "tsc && webpack --mode=production",
         "clean": "rm -rf lib node_modules",
@@ -13,6 +13,9 @@
     },
     "author": "KJK",
     "license": "MIT",
+    "dependencies": {
+        "glass": "https://534bbe4a0539686fa00fd4d8cf65d68abee8f440:x-oauth-basic@github.com/krisnye/glass.git"
+    },
     "devDependencies": {
         "typescript": "^3.0.1",
         "webpack": "^4.17.1",
