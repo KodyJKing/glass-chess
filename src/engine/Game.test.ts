@@ -3,6 +3,7 @@ import { Game } from "./Game";
 
 test("game", t => {
     let game = new Game()
-    console.log("\n" + game.toString())
+    let str = game.toString()
+    // console.log("\n" + str)
     t.pass()
 })
