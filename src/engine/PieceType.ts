@@ -1,4 +1,5 @@
 export enum PieceType {
+    Empty,
     Pawn,
     Knight,
     Bishop,
