@@ -1,5 +1,5 @@
 import test from "ava"
 
-test("clonePatch", t => {
+test("foo", t => {
     t.pass()
 })

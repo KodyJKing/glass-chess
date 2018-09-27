@@ -26,7 +26,8 @@
         "max-classes-per-file": false,
         "eofline": false,
         "semicolon": [true, "never"],
-        "curly": false
+        "curly": false,
+        "no-bitwise": false
     },
     "rulesDirectory": [],
     "quotemark": [true, "single"]
