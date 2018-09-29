@@ -2,12 +2,7 @@ import test from "ava"
 import struct from "./struct";
 import { PieceType } from "./PieceType";
 import { Color } from "./Color";
-
-const Piece = struct([
-    ["type", 3],
-    ["color", 1],
-    ["moved", 1]
-])
+import Piece from "./Piece";
 
 test("constructor/setComponent", t => {
     let p = Piece.create(PieceType.King, Color.White, 0)
@@ -39,9 +34,9 @@ test("toObject/fromObject", t => {
 // test("structConstructorPerformance", t => {
 //     console.time("structConstructor")
 //     for (let i = 0; i < 10000; i++) {
-//         piece.create(PieceType.King, Color.White, 0)
-//         piece.create(PieceType.Rook, Color.Black, 1)
-//         piece.create(PieceType.Knight, Color.Black, 1)
+//         Piece.create(PieceType.King, Color.White, 0)
+//         Piece.create(PieceType.Rook, Color.Black, 1)
+//         Piece.create(PieceType.Knight, Color.Black, 1)
 //     }
 //     console.timeEnd("structConstructor")
 //     t.pass()

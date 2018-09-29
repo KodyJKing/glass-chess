@@ -1,6 +1,6 @@
 type Properties = [string, number, number][]
 
-const mask = (width: number) => (1 << width) - 1
+const mask = (width: number) => (1 << width) - 1;
 
 function propertiesWithShift(properties: [string, number][]) {
     let shift = 0
@@ -19,16 +19,16 @@ function fromArguments(properties: Properties) {
     return result as (...args: number[]) => number
 }
 
-function toObject(properties: Properties) {
-    let parts = properties.map( ([name, width, shift]) => `${name}: (struct >> ${shift}) & ${mask(width)}` )
-    let result = new Function("struct", `return { ${parts.join(" , ")} }`)
-    return result as (struct: number) => { [name: string]: number }
-}
-
 function fromObject(properties: Properties) {
     let parts = properties.map( ([name, width, shift]) => `(object.${name} << ${shift})` )
     let result = new Function("object", "return " + parts.join(" | "))
     return result as (object: { [name: string]: number }) => number
+}
+
+function toObject(properties: Properties) {
+    let parts = properties.map( ([name, width, shift]) => `${name}: (struct >> ${shift}) & ${mask(width)}` )
+    let result = new Function("struct", `return { ${parts.join(" , ")} }`)
+    return result as (struct: number) => { [name: string]: number }
 }
 
 export default function struct(properties: [string, number][]) {
