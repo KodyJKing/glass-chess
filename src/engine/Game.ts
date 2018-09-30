@@ -1,6 +1,5 @@
 import { Type } from "./Type";
 import { Color } from "./Color";
-import struct from "./struct";
 import Piece from "./Piece";
 import Position from "./Position";
 
@@ -71,7 +70,8 @@ export class Game {
         return result.join("\n")
     }
 
-    slide(x: number, y: number, dx: number, dy: number, max: number, color: Color, moves: number[]): number | undefined {
+    slide(x: number, y: number, dx: number, dy: number, max: number, color: Color, onlyCaptures: boolean, moves: number[]): number {
+        let count = 0
         for (let i = 1; i <= max; i++) {
             x += dx
             y += dy
@@ -80,74 +80,85 @@ export class Game {
             let pos = Pos(x, y)
             let obstacle = this.pieces[pos]
             if (Piece.get.type(obstacle) !== Type.Empty) {
-                if (Piece.get.color(obstacle) !== color){
+                if (Piece.get.color(obstacle) !== color) {
                     moves.push(pos)
-                    return obstacle
+                    return ++count
                 }
                 break
-            } else {
+            } else if (!onlyCaptures) {
                 moves.push(pos)
+                ++count
             }
         }
+        return count
     }
 
-    slideCardinals(x: number, y: number, max: number, color: Color, moves: number[]) {
-        this.slide(x, y, 1, 0, max, color, moves)
-        this.slide(x, y, -1, 0, max, color, moves)
-        this.slide(x, y, 0, -1, max, color, moves)
-        this.slide(x, y, 0, 1, max, color, moves)
+    slideCardinals(x: number, y: number, max: number, color: Color, onlyCaptures: boolean, moves: number[]) {
+        this.slide(x, y, 1, 0, max, color, onlyCaptures, moves)
+        this.slide(x, y, -1, 0, max, color, onlyCaptures, moves)
+        this.slide(x, y, 0, -1, max, color, onlyCaptures, moves)
+        this.slide(x, y, 0, 1, max, color, onlyCaptures, moves)
     }
 
-    slideDiagonals(x: number, y: number, max: number, color: Color, moves: number[]) {
-        this.slide(x, y, 1, 1, max, color, moves)
-        this.slide(x, y, -1, 1, max, color, moves)
-        this.slide(x, y, 1, -1, max, color, moves)
-        this.slide(x, y, -1, -1, max, color, moves)
+    slideDiagonals(x: number, y: number, max: number, color: Color, onlyCaptures: boolean, moves: number[]) {
+        this.slide(x, y, 1, 1, max, color, onlyCaptures, moves)
+        this.slide(x, y, -1, 1, max, color, onlyCaptures, moves)
+        this.slide(x, y, 1, -1, max, color, onlyCaptures, moves)
+        this.slide(x, y, -1, -1, max, color, onlyCaptures, moves)
     }
 
     generateMovesAt(pos: number) {
         let piece = this.pieces[pos]
-        return this.generateMoves(pos, Piece.get.type(piece), Piece.get.color(piece), Piece.get.moved(piece))
+        return this.generateMoves(pos, Piece.get.type(piece), Piece.get.color(piece), Piece.get.moved(piece), false)
     }
 
-    generateMoves(pos: number, type: Type, color: Color, moved: number) {
+    generateMoves(pos: number, type: Type, color: Color, moved: number, onlyCaptures: boolean) {
         let x = Position.get.x(pos)
         let y = Position.get.y(pos)
         let moves = []
         switch (type) {
             case Type.Pawn: {
                 let dy = color == Color.White ? -1: 1
-                this.slide(x, y, 0, dy, moved ? 1 : 2, color, moves)
-
-                let length = moves.length
-                if (this.slide(x, y, -1, dy, 1, color, moves) === undefined)
-                    moves.length = length
-                length = moves.length
-                if (this.slide(x, y, 1, dy, 1, color, moves) === undefined)
-                    moves.length = length
-
+                this.slide(x, y, 0, dy, moved ? 1 : 2, color, onlyCaptures, moves)
+                this.slide(x, y, -1, dy, 1, color, true, moves)
+                this.slide(x, y, 1, dy, 1, color, true, moves)
                 break
             }
             case Type.Knight: {
                 // QI, +x, +y
-                this.slide(x, y, 2, 1, 1, color, moves)
-                this.slide(x, y, 1, 2, 1, color, moves)
+                this.slide(x, y, 2, 1, 1, color, onlyCaptures, moves)
+                this.slide(x, y, 1, 2, 1, color, onlyCaptures, moves)
                 // QII, -x, +y
-                this.slide(x, y, -2, 1, 1, color, moves)
-                this.slide(x, y, -1, 2, 1, color, moves)
+                this.slide(x, y, -2, 1, 1, color, onlyCaptures, moves)
+                this.slide(x, y, -1, 2, 1, color, onlyCaptures, moves)
                 // QIII, -x, -y
-                this.slide(x, y, -2, -1, 1, color, moves)
-                this.slide(x, y, -1, -2, 1, color, moves)
+                this.slide(x, y, -2, -1, 1, color, onlyCaptures, moves)
+                this.slide(x, y, -1, -2, 1, color, onlyCaptures, moves)
                 // QIV, +x, -y
-                this.slide(x, y, 2, -1, 1, color, moves)
-                this.slide(x, y, 1, -2, 1, color, moves)
+                this.slide(x, y, 2, -1, 1, color, onlyCaptures, moves)
+                this.slide(x, y, 1, -2, 1, color, onlyCaptures, moves)
                 break
             }
-            case Type.Bishop: { this.slideDiagonals(x, y, 7, color, moves); break }
-            case Type.Rook: { this.slideCardinals(x, y, 7, color, moves); break }
-            case Type.Queen: { this.slideDiagonals(x, y, 7, color, moves); this.slideCardinals(x, y, 7, color, moves); break }
-            case Type.King: { this.slideDiagonals(x, y, 1, color, moves); this.slideCardinals(x, y, 1, color, moves); break }
+            case Type.Bishop: { this.slideDiagonals(x, y, 7, color, onlyCaptures, moves); break }
+            case Type.Rook: { this.slideCardinals(x, y, 7, color, onlyCaptures, moves); break }
+            case Type.Queen: { this.slideDiagonals(x, y, 7, color, onlyCaptures, moves); this.slideCardinals(x, y, 7, color, onlyCaptures, moves); break }
+            case Type.King: { this.slideDiagonals(x, y, 1, color, onlyCaptures, moves); this.slideCardinals(x, y, 1, color, onlyCaptures, moves); break }
         }
         return moves
+    }
+
+    // Capturing moves are direction reversible so it's OK to scan from the friendly piece to the enemy pieces.
+    // If we do this for each type, we can be sure no pieces threaten our piece.
+    // If we can 'capture' them, they can capture us.
+    isSafe(pos: number, color: Color) {
+        for (let type = Type.Pawn; type <= Type.King; type++) {
+            let moves = this.generateMoves(pos, type, color, 1, true)
+            for (let move of moves) {
+                let piece = this.pieces[move]
+                if (Piece.get.type(piece) === type)
+                    return false
+            }
+        }
+        return true
     }
 }

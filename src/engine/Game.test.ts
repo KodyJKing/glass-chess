@@ -96,3 +96,16 @@ test("generateMoves_Knight", t => {
     t.true(compareBoards(expected, actual))
     // console.log("\n" + actual)
 })
+
+
+test("isSafe", t => {
+    let game = new Game()
+    let pos = Position.create(3, 3)
+    game.pieces[pos] = Piece.create(Type.Knight, Color.Black, 0)
+    
+    // console.log("\n" + game.toString())
+    t.true(game.isSafe(pos, Color.Black))
+    game.pieces[Position.create(3, 0)] = Piece.create(Type.Queen, Color.White, 0)
+    // console.log("\n" + game.toString())
+    t.false(game.isSafe(pos, Color.Black))
+})
