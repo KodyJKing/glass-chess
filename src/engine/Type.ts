@@ -1,4 +1,4 @@
-export enum PieceType {
+export enum Type {
     Empty,
     Pawn,
     Knight,
