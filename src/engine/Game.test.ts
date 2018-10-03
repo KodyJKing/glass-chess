@@ -31,9 +31,7 @@ test("parseBoard", t => {
 
 test("generateMoves_Rook", t => {
     let game = new Game().standardSetup()
-    let x = 0
-    let y = 2
-    let pos = Position.create(x, y)
+    let pos = Position.create(0, 2)
     game.pieces[pos] = Piece.create(Type.Rook, Color.Black, 0)
 
     let expected = `
@@ -109,3 +107,18 @@ test("isSafe", t => {
     // console.log("\n" + game.toString())
     t.false(game.isSafe(pos, Color.Black))
 })
+
+// test("moveGenPerformance", t => {
+//     let game = new Game().standardSetup()
+//     let pos = Position.create(0, 2)
+//     game.pieces[pos] = Piece.create(Type.Rook, Color.Black, 0)
+
+//     // console.log("\n" + game.toString())
+//     let moves = game.generateMovesAt(pos)
+//     console.time("moveGen")
+//     for (let i = 0; i < 10000; i++)
+//         game.generateMovesAt(pos)
+//     console.timeEnd("moveGen")
+
+//     t.pass()
+// })

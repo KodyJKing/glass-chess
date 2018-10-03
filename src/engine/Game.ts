@@ -2,6 +2,7 @@ import { Type } from "./Type";
 import { Color } from "./Color";
 import Piece from "./Piece";
 import Position from "./Position";
+import Move from "./Move";
 
 const Pos = Position.create
 
@@ -18,9 +19,11 @@ function charToPiece(char: string) {
 }
 
 export class Game {
-    pieces: number[]
+    pieces: Uint8Array
+    kingPos: Uint8Array
     constructor() {
-        this.pieces = new Array(64)
+        this.pieces = new Uint8Array(64)
+        this.kingPos = new Uint8Array([0, 0])
     }
 
     standardSetup() {
