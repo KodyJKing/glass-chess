@@ -8,8 +8,8 @@
         "start": "node lib/app/server/main.js",
         "build": "tsc && webpack --mode=production",
         "clean": "rm -rf lib node_modules",
-        "watch": "tsc -w & webpack-dev-server --mode=development & ava -w",
-        "watchWin": "concurrently \"tsc -w\" \"webpack-dev-server --mode=development\" \"ava -w\""
+        "watchWebpack": "webpack-dev-server --mode=development",
+        "watch": "tsc -w & yarn watchWebpack & ava -w"
     },
     "author": "KJK",
     "license": "MIT",

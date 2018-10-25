@@ -19,11 +19,12 @@ function charToPiece(char: string) {
 }
 
 export class Game {
+
+    // Representation
+
     pieces: Uint8Array
-    kingPos: Uint8Array
     constructor() {
         this.pieces = new Uint8Array(64)
-        this.kingPos = new Uint8Array([0, 0])
     }
 
     standardSetup() {
@@ -38,11 +39,11 @@ export class Game {
     }
 
     static parseBoard(board: string) {
-        let rows = 
+        let rows =
             board.split("\n")
             .filter( (row) => row.length > 0 ) // Remove empty lines.
-            .map( 
-                (row) => 
+            .map(
+                (row) =>
                     row.replace(/ /g, "")     // Remove whitespace.
                     .split("")                // Convert to char array.
                     .map(charToPiece)
@@ -57,12 +58,13 @@ export class Game {
     }
 
     toString(moves?: number[]) {
+        let positions = moves ? moves.map((move) => Move.get.to(move)) : []
         let result: string[] = []
         for (let y = 0; y < 8; y++) {
             let row: string[] = []
             for (let x = 0; x < 8; x++) {
                 let char
-                if (moves && moves.indexOf(Position.create(x, y)) > -1)
+                if (positions.indexOf(Position.create(x, y)) > -1)
                     char = "#"
                 else
                     char = pieceToChar(this.pieces[Pos(x, y)])
@@ -73,81 +75,104 @@ export class Game {
         return result.join("\n")
     }
 
-    slide(x: number, y: number, dx: number, dy: number, max: number, color: Color, onlyCaptures: boolean, moves: number[]): number {
+    // Move Generation
+
+    slide(from: number, dx: number, dy: number, max: number, color: Color, onlyCaptures: boolean, moves: number[]): number {
         let count = 0
+        let x = Position.get.x(from)
+        let y = Position.get.y(from)
         for (let i = 1; i <= max; i++) {
             x += dx
             y += dy
             if (x < 0 || x >= 8 || y < 0 || y >= 8)
                 break
-            let pos = Pos(x, y)
-            let obstacle = this.pieces[pos]
+            let to = Pos(x, y)
+            let obstacle = this.pieces[to]
+            let move = Move.create(to, from, obstacle, 0, 0)
             if (Piece.get.type(obstacle) !== Type.Empty) {
                 if (Piece.get.color(obstacle) !== color) {
-                    moves.push(pos)
+                    moves.push(move)
                     return ++count
                 }
                 break
             } else if (!onlyCaptures) {
-                moves.push(pos)
+                moves.push(move)
                 ++count
             }
         }
         return count
     }
 
-    slideCardinals(x: number, y: number, max: number, color: Color, onlyCaptures: boolean, moves: number[]) {
-        this.slide(x, y, 1, 0, max, color, onlyCaptures, moves)
-        this.slide(x, y, -1, 0, max, color, onlyCaptures, moves)
-        this.slide(x, y, 0, -1, max, color, onlyCaptures, moves)
-        this.slide(x, y, 0, 1, max, color, onlyCaptures, moves)
+    slideCardinals(pos: number, max: number, color: Color, onlyCaptures: boolean, moves: number[]) {
+        this.slide(pos, 1, 0, max, color, onlyCaptures, moves)
+        this.slide(pos, -1, 0, max, color, onlyCaptures, moves)
+        this.slide(pos, 0, -1, max, color, onlyCaptures, moves)
+        this.slide(pos, 0, 1, max, color, onlyCaptures, moves)
     }
 
-    slideDiagonals(x: number, y: number, max: number, color: Color, onlyCaptures: boolean, moves: number[]) {
-        this.slide(x, y, 1, 1, max, color, onlyCaptures, moves)
-        this.slide(x, y, -1, 1, max, color, onlyCaptures, moves)
-        this.slide(x, y, 1, -1, max, color, onlyCaptures, moves)
-        this.slide(x, y, -1, -1, max, color, onlyCaptures, moves)
+    slideDiagonals(pos: number, max: number, color: Color, onlyCaptures: boolean, moves: number[]) {
+        this.slide(pos, 1, 1, max, color, onlyCaptures, moves)
+        this.slide(pos, -1, 1, max, color, onlyCaptures, moves)
+        this.slide(pos, 1, -1, max, color, onlyCaptures, moves)
+        this.slide(pos, -1, -1, max, color, onlyCaptures, moves)
     }
 
-    generateMovesAt(pos: number) {
-        let piece = this.pieces[pos]
-        return this.generateMoves(pos, Piece.get.type(piece), Piece.get.color(piece), Piece.get.moved(piece), false)
-    }
-
-    generateMoves(pos: number, type: Type, color: Color, moved: number, onlyCaptures: boolean) {
-        let x = Position.get.x(pos)
-        let y = Position.get.y(pos)
+    generateMoves(pos: number, type: Type, color: Color, moved: number, onlyCaptures: boolean): number[] {
         let moves = []
         switch (type) {
             case Type.Pawn: {
                 let dy = color == Color.White ? -1: 1
-                this.slide(x, y, 0, dy, moved ? 1 : 2, color, onlyCaptures, moves)
-                this.slide(x, y, -1, dy, 1, color, true, moves)
-                this.slide(x, y, 1, dy, 1, color, true, moves)
+                this.slide(pos, 0, dy, moved ? 1 : 2, color, onlyCaptures, moves)
+                this.slide(pos, -1, dy, 1, color, true, moves)
+                this.slide(pos, 1, dy, 1, color, true, moves)
                 break
             }
             case Type.Knight: {
                 // QI, +x, +y
-                this.slide(x, y, 2, 1, 1, color, onlyCaptures, moves)
-                this.slide(x, y, 1, 2, 1, color, onlyCaptures, moves)
+                this.slide(pos, 2, 1, 1, color, onlyCaptures, moves)
+                this.slide(pos, 1, 2, 1, color, onlyCaptures, moves)
                 // QII, -x, +y
-                this.slide(x, y, -2, 1, 1, color, onlyCaptures, moves)
-                this.slide(x, y, -1, 2, 1, color, onlyCaptures, moves)
+                this.slide(pos, -2, 1, 1, color, onlyCaptures, moves)
+                this.slide(pos, -1, 2, 1, color, onlyCaptures, moves)
                 // QIII, -x, -y
-                this.slide(x, y, -2, -1, 1, color, onlyCaptures, moves)
-                this.slide(x, y, -1, -2, 1, color, onlyCaptures, moves)
+                this.slide(pos, -2, -1, 1, color, onlyCaptures, moves)
+                this.slide(pos, -1, -2, 1, color, onlyCaptures, moves)
                 // QIV, +x, -y
-                this.slide(x, y, 2, -1, 1, color, onlyCaptures, moves)
-                this.slide(x, y, 1, -2, 1, color, onlyCaptures, moves)
+                this.slide(pos, 2, -1, 1, color, onlyCaptures, moves)
+                this.slide(pos, 1, -2, 1, color, onlyCaptures, moves)
                 break
             }
-            case Type.Bishop: { this.slideDiagonals(x, y, 7, color, onlyCaptures, moves); break }
-            case Type.Rook: { this.slideCardinals(x, y, 7, color, onlyCaptures, moves); break }
-            case Type.Queen: { this.slideDiagonals(x, y, 7, color, onlyCaptures, moves); this.slideCardinals(x, y, 7, color, onlyCaptures, moves); break }
-            case Type.King: { this.slideDiagonals(x, y, 1, color, onlyCaptures, moves); this.slideCardinals(x, y, 1, color, onlyCaptures, moves); break }
+            case Type.Bishop: { this.slideDiagonals(pos, 7, color, onlyCaptures, moves); break }
+            case Type.Rook: { this.slideCardinals(pos, 7, color, onlyCaptures, moves); break }
+            case Type.Queen: { this.slideDiagonals(pos, 7, color, onlyCaptures, moves); this.slideCardinals(pos, 7, color, onlyCaptures, moves); break }
+            case Type.King: { this.slideDiagonals(pos, 1, color, onlyCaptures, moves); this.slideCardinals(pos, 1, color, onlyCaptures, moves); break }
         }
         return moves
+    }
+
+    generateMovesAt(pos: number) {
+        let piece = this.pieces[pos]
+        let moves = this.generateMoves(pos, Piece.get.type(piece), Piece.get.color(piece), Piece.get.moved(piece), false)
+        if (!Piece.get.moved(piece))
+            for (let i = 0; i < moves.length; i++)
+                moves[i] = Move.set.firstMove(moves[i], 1)
+        return moves
+    }
+
+    // This can be slow because it is only used by filterByKingSafetly.
+    kingPos(turn: Color) {
+        for (let i = 0; i < 64; i++) {
+            let p = this.pieces[i]
+            if (Piece.get.type(p) === Type.King && Piece.get.color(p) === turn)
+                return i
+        }
+        throw new Error(`Missing ${turn} king.`)
+    }
+
+    // This can be slow because it's not used in the search algorithm.
+    // Because of the piece value of the king, this check would be redundant.
+    filterByKingSafety(turn: Color, moves: number[]) {
+        let kingPos = this.kingPos(turn)
     }
 
     // Capturing moves are direction reversible so it's OK to scan from the friendly piece to the enemy pieces.
@@ -157,7 +182,7 @@ export class Game {
         for (let type = Type.Pawn; type <= Type.King; type++) {
             let moves = this.generateMoves(pos, type, color, 1, true)
             for (let move of moves) {
-                let piece = this.pieces[move]
+                let piece = this.pieces[Move.get.to(move)]
                 if (Piece.get.type(piece) === type)
                     return false
             }
