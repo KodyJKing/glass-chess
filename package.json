@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "dev": " yarn install && npm link glass && yarn build",
+        "dev": " yarn install && yarn link \"glass\" && yarn build",
         "start": "node lib/app/server/main.js",
         "build": "tsc && webpack --mode=production",
         "clean": "rm -rf lib node_modules",
