@@ -3,21 +3,9 @@ import { Color } from "./Color";
 import Piece from "./Piece";
 import Position from "./Position";
 import Move from "./Move";
+import { pieceToChar, charToPiece } from "./common";
 
 const Pos = Position.create
-
-const pieceToCharStr = ".pnbrqk"
-function pieceToChar(piece: number) {
-    let char = pieceToCharStr[Piece.get.type(piece)]
-    return Piece.get.color(piece) === Color.Black ? char : char.toUpperCase()
-}
-
-function charToPiece(char: string) {
-    let type = pieceToCharStr.indexOf(char.toLowerCase())
-    let color = (char === char.toLowerCase()) ? Color.Black : Color.White
-    return Piece.create(type, color, 0)
-}
-
 export class Game {
 
     // Representation

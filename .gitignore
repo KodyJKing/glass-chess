@@ -2,6 +2,7 @@
 lib
 www/*.js
 www/*.js.map
+www/*.svg
 
 # Logs
 logs
