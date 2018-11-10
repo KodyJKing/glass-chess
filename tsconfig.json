@@ -3,6 +3,10 @@
         "src"
     ],
     "compilerOptions": {
+        "typeRoots": [
+            "./node_modules/@types",
+            "./src/build/typings"
+        ],
         "target": "ESNEXT",
         "module": "commonjs",
         "outDir": "lib",

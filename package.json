@@ -6,10 +6,12 @@
     "scripts": {
         "dev": " yarn install && yarn link \"glass\" && yarn build",
         "start": "node lib/app/server/main.js",
-        "build": "tsc && webpack --mode=production",
+        "build": "tsc && yarn copyFiles && webpack --mode=production",
         "clean": "rm -rf lib node_modules",
         "watchWebpack": "webpack-dev-server --mode=development",
-        "watch": "tsc -w & yarn watchWebpack & ava -w"
+        "watch": "tsc -w & yarn watchWebpack & ava -w & yarn watchCopyFiles",
+        "watchCopyFiles": "nodemon -d 1 -w src -e svg -x yarn copyFiles",
+        "copyFiles": "copyfiles -u 1 src/**/*.svg lib/"
     },
     "author": "KJK",
     "license": "MIT",
@@ -22,6 +24,8 @@
         "webpack-bundle-analyzer": "^3.0.2",
         "webpack-cli": "^3.1.0",
         "webpack-dev-server": "^3.1.5",
-        "ava": "^0.25.0"
+        "ava": "^0.25.0",
+        "copyfiles": "^2.1.0",
+        "file-loader": "^2.0.0"
     }
 }
