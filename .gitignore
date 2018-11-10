@@ -1,6 +1,7 @@
 .DS_Store
 lib
-www/index.js*
+www/*.js
+www/*.js.map
 
 # Logs
 logs
