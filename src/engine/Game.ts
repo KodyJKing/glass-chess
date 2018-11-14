@@ -157,15 +157,27 @@ export class Game {
     }
 
     canCastle(pos: number, color: Color, dx: number) {
+        return this.rookVisible(pos, color, dx) && !this.passesThroughCheck(pos, color, dx)
+    }
+    rookVisible(pos: number, color: Color, dx: number) {
         let x = posX(pos)
         let y = posY(pos)
         while (true) {
             x += dx
             let piece = this.pieces[Pos(x, y)]
             let type = Piece.get.type(piece)
-            if (type !== Type.Empty)
+            if (type != Type.Empty)
                 return type === Type.Rook && !Piece.get.moved(piece) && Piece.get.color(piece) === color
         }
+        return false
+    }
+    passesThroughCheck(pos: number, color: Color, dx: number) {
+        let x = posX(pos)
+        let y = posY(pos)
+        for (let i = 0; i < 2; i++)
+            if (!this.isSafe(Pos(x + i * dx, y), color))
+                return true
+        return false
     }
 
     tryCastle(to, from, undo) {
