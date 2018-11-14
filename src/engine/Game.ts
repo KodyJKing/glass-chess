@@ -6,14 +6,21 @@ import Move from "./Move";
 import { pieceToChar, charToPiece } from "./common";
 
 const Pos = Position.create
+const posX = Position.get.x
+const posY = Position.get.y
+
+const EMPTY = Piece.create(0, 0, 0)
+
 enum Ternary { always, never, either }
 export class Game {
 
     // Representation
 
     pieces: Uint8Array
+    turn: Color
     constructor() {
         this.pieces = new Uint8Array(64)
+        this.turn = Color.White
     }
 
     standardSetup() {
@@ -68,8 +75,8 @@ export class Game {
 
     slide(from: number, dx: number, dy: number, max: number, color: Color, captures: Ternary, moves: number[]): number {
         let count = 0
-        let x = Position.get.x(from)
-        let y = Position.get.y(from)
+        let x = posX(from)
+        let y = posY(from)
         for (let i = 1; i <= max; i++) {
             x += dx
             y += dy
@@ -77,7 +84,7 @@ export class Game {
                 break
             let to = Pos(x, y)
             let obstacle = this.pieces[to]
-            let move = Move.create(to, from, obstacle, 0, 0)
+            let move = Move.create(to, from, obstacle, 0)
             if (Piece.get.type(obstacle) !== Type.Empty) {
                 if (captures !== Ternary.never && Piece.get.color(obstacle) !== color) {
                     moves.push(move)
@@ -107,7 +114,7 @@ export class Game {
     }
 
     generateMoves(pos: number, type: Type, color: Color, moved: number, captures: Ternary): number[] {
-        let moves = []
+        let moves: number[] = []
         switch (type) {
             case Type.Pawn: {
                 let dy = color == Color.White ? -1: 1
@@ -134,25 +141,78 @@ export class Game {
             case Type.Bishop: { this.slideDiagonals(pos, 7, color, captures, moves); break }
             case Type.Rook: { this.slideCardinals(pos, 7, color, captures, moves); break }
             case Type.Queen: { this.slideDiagonals(pos, 7, color, captures, moves); this.slideCardinals(pos, 7, color, captures, moves); break }
-            case Type.King: { this.slideDiagonals(pos, 1, color, captures, moves); this.slideCardinals(pos, 1, color, captures, moves); break }
+            case Type.King: {
+                this.slideDiagonals(pos, 1, color, captures, moves)
+                this.slideCardinals(pos, 1, color, captures, moves)
+                if (!moved) {
+                    if (this.canCastle(pos, color, -1))
+                        moves.push(Move.create(Pos(2, posY(pos)), pos, 0, 1))
+                    if (this.canCastle(pos, color, 1))
+                        moves.push(Move.create(Pos(6, posY(pos)), pos, 0, 1))
+                }
+                break
+            }
         }
         return moves
+    }
+
+    canCastle(pos: number, color: Color, dx: number) {
+        let x = posX(pos)
+        let y = posY(pos)
+        while (true) {
+            x += dx
+            let piece = this.pieces[Pos(x, y)]
+            let type = Piece.get.type(piece)
+            if (type !== Type.Empty)
+                return type === Type.Rook && !Piece.get.moved(piece) && Piece.get.color(piece) === color
+        }
+    }
+
+    tryCastle(to, from, undo) {
+        let dx = posX(to) - posX(from)
+        if (Math.abs(dx) < 2)
+            return
+
+        let y = posY(to)
+        let rookFrom = Pos(dx > 0 ? 7 : 0, y)
+        let rookTo = Pos(posX(to) - Math.sign(dx), y)
+
+        if (undo) {
+            let rook = this.pieces[rookTo]
+            this.pieces[rookFrom] = Piece.set.moved(rook, 0)
+            this.pieces[rookTo] = EMPTY
+        } else {
+            let rook = this.pieces[rookFrom]
+            this.pieces[rookFrom] = EMPTY
+            this.pieces[rookTo] = Piece.set.moved(rook, 1)
+        }
     }
 
     doMove(move: number) {
         let from = Move.get.from(move)
         let to = Move.get.to(move)
         let piece = this.pieces[from]
-        this.pieces[from] = 0
-        this.pieces[to] = piece
+        this.pieces[from] = EMPTY
+        this.pieces[to] = Piece.set.moved(piece, 1)
+
+        this.turn = (this.turn + 1) % 2
+
+        if (Piece.get.type(piece) === Type.King)
+            this.tryCastle(to, from, false)
     }
 
     undoMove(move: number) {
         let from = Move.get.from(move)
         let to = Move.get.to(move)
         let piece = this.pieces[to]
-        this.pieces[from] = piece
+        let hadMoved = Move.get.firstMove(move) ? 0 : 1
+        this.pieces[from] = Piece.set.moved(piece,hadMoved)
         this.pieces[to] = Move.get.captured(move)
+
+        this.turn = (this.turn + 1) % 2
+
+        if (Piece.get.type(piece) === Type.King)
+            this.tryCastle(to, from, true)
     }
 
     generateMovesAt(pos: number) {

@@ -1,0 +1,1 @@
+export enum Bool { true, false }
