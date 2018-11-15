@@ -1,9 +1,10 @@
-import Context from "glass/html/Context"
+import SignupForm from "glass/html/components/SignupForm"
+import Checkbox from "glass/html/components/Checkbox"
 import Stylesheets from "glass/html/Stylesheets"
+import Context from "glass/html/Context"
 import Page from "glass/html/Page"
 import Key, { ModelKey } from "glass/data/Key"
 import Model from "glass/data/Model"
-import SignupForm from "glass/html/components/SignupForm"
 import State from "glass/data/State"
 
 import { Game } from "../engine/Game";
@@ -24,6 +25,7 @@ Stylesheets.add(t => `
         position: absolute;
         top: 0px;
         left: 0px;
+        user-select: none;
     }
 
     .Board {
@@ -31,7 +33,6 @@ Stylesheets.add(t => `
         width: ${WIDTH}px;
         height: ${WIDTH}px;
         background: ${t.colors.background.light};
-        user-select: none;
         overflow: hidden;
         border-radius: 8px;
         box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8);
@@ -49,6 +50,14 @@ Stylesheets.add(t => `
         box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.25);
         z-index: 1;
     }
+
+    .Piece {
+        flex-grow: 1;
+    }
+
+    .Piece_highlighted {
+        filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.5));
+    }
 `)
 
 @Model.class()
@@ -59,6 +68,15 @@ class GameState extends State {
 
     @Model.property({ type: "number", default: -1 })
     selectY!: number
+
+    @Model.property({ type: "number", default: -1 })
+    hoverX!: number
+
+    @Model.property({ type: "number", default: -1 })
+    hoverY!: number
+
+    @Model.property({ type: "boolean", default: false })
+    debug!: boolean
 
     static readonly store = "memory"
     static key = Key.create(GameState, "0")
@@ -72,6 +90,7 @@ function board(c: Context) {
     let { state, end, html: { div, img } } = c
     let gameState = state.get(GameState.key)
     let {selectX, selectY} = gameState
+
     let selectPos = Position.create(selectX, selectY)
     let moves = game.generateSafeMovesAt(selectPos)
     let selection = {}
@@ -85,6 +104,7 @@ function board(c: Context) {
                 let piece = Piece.toObject(game.pieces[pos])
                 let move = selection[pos]
                 let highlighted = move !== undefined
+                let selected = x == selectX && y == selectY
                 let color = (x + y) % 2 == 0 ? WHITE : BLACK
 
                 div({
@@ -94,13 +114,13 @@ function board(c: Context) {
                         top: ${y * SQUARE_WIDTH};
                         background: ${color}; `,
                     onclick() {
-                        if (x == selectX && y == selectY) {
+                        if (selected) {
                             state.patch(GameState.key, {selectX: -1, selectY: -1})
                         } else if (highlighted) {
                             game.doMove(move)
                             state.patch(GameState.key, {selectX: -1, selectY: -1})
                         } else {
-                            if (piece.color === game.turn)
+                            if (piece.color === game.turn || gameState.debug)
                                 state.patch(GameState.key, {selectX: x, selectY: y})
                         }
                     }
@@ -109,7 +129,11 @@ function board(c: Context) {
                         let colorName = Color[piece.color]
                         let typeName = Type[piece.type]
                         let pieceName = colorName.toLowerCase() + typeName
-                        img({ src: pieces[pieceName], style: "flex-grow: 1;", draggable: "false" })
+                        img({
+                            src: pieces[pieceName],
+                            class: `Piece ${ (selected || highlighted) ? "Piece_highlighted" : "" }`,
+                            draggable: false
+                        })
                         end()
                     }
                 end()
@@ -130,8 +154,17 @@ class GamePage extends Page {
             div({style: "flex-grow: 1;"}); end()
             div({ style: "margin: 16px;" })
                 render(board)
-                div({ style: "padding-top: 8px" })
+                div({ style: "padding-top: 8px; display: flex" })
                     text("Turn: " + Color[game.turn])
+                    div({ style: "flex-grow: 1" }); end()
+                    text("Debug")
+                    render(Checkbox, {
+                        id: "debug",
+                        value: gameState.debug,
+                        onchange(this: HTMLInputElement){
+                            state.patch(GameState.key, { debug: this.checked })
+                        }
+                    })
                 end()
             end()
             div({style: "flex-grow: 1;"}); end()
