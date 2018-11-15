@@ -249,7 +249,8 @@ export class Game {
             if (Piece.get.type(p) === Type.King && Piece.get.color(p) === turn)
                 return i
         }
-        throw new Error(`Missing ${turn} king.`)
+        return null
+        // throw new Error(`Missing ${turn} king.`)
     }
 
     // This can be slow because it's not used in the search algorithm.
@@ -259,7 +260,7 @@ export class Game {
         for (let move of moves) {
             this.doMove(move)
             let kingPos = this.kingPos(turn)
-            if (this.isSafe(kingPos, turn))
+            if (kingPos == null || this.isSafe(kingPos, turn))
                 result.push(move)
             this.undoMove(move)
         }
