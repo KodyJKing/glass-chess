@@ -1,31 +1,19 @@
 {
     "name": "glass-chess",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
+    "version": "0.0.0",
+    "repository": "https://github.com/krisnye/glass-chess.git",
+    "author": "Kody King <kody.j.king@gmail.com>",
+    "license": "none",
     "scripts": {
-        "dev": " yarn install && yarn link \"glass\" && yarn build",
-        "start": "node lib/app/server/main.js",
-        "build": "tsc && yarn copyFiles && webpack --mode=production",
-        "clean": "rm -rf lib node_modules",
-        "watchWebpack": "webpack-dev-server --mode=development",
-        "watch": "tsc -w & yarn watchWebpack & ava -w & yarn watchCopyFiles",
-        "watchCopyFiles": "nodemon -d 1 -w src -e svg -x yarn copyFiles",
-        "copyFiles": "copyfiles -u 1 src/**/*.svg lib/"
+        "start": "guild start"
     },
-    "author": "KJK",
-    "license": "MIT",
-    "dependencies": {
-        "glass": "https://534bbe4a0539686fa00fd4d8cf65d68abee8f440:x-oauth-basic@github.com/krisnye/glass.git"
-    },
+    "private": true,
     "devDependencies": {
-        "typescript": "^3.0.1",
-        "webpack": "^4.17.1",
-        "webpack-bundle-analyzer": "^3.0.2",
-        "webpack-cli": "^3.1.0",
-        "webpack-dev-server": "^3.1.5",
+        "@types/express": "^4.16.0"
+    },
+    "dependencies": {
         "ava": "^0.25.0",
-        "copyfiles": "^2.1.0",
-        "file-loader": "^2.0.0"
+        "express": "^4.16.4",
+        "glass-platform": "*"
     }
 }

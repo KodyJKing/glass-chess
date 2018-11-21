@@ -1,15 +1,15 @@
-import SignupForm from "glass/html/components/SignupForm"
-import Checkbox from "glass/html/components/Checkbox"
-import Stylesheets from "glass/html/Stylesheets"
-import Context from "glass/html/Context"
-import Page from "glass/html/Page"
-import Key, { ModelKey } from "glass/data/Key"
-import Model from "glass/data/Model"
-import State from "glass/data/State"
+import SignupForm from "glass-platform/html/components/SignupForm"
+import Checkbox from "glass-platform/html/components/Checkbox"
+import Stylesheets from "glass-platform/html/Stylesheets"
+import Context from "glass-platform/html/Context"
+import Page from "glass-platform/html/Page"
+import Key, { ModelKey } from "glass-platform/data/Key"
+import Model from "glass-platform/data/Model"
+import State from "glass-platform/data/State"
 
 import { Game } from "../engine/Game";
 import Position from "../engine/Position";
-import pieces from "./pieces";
+// import pieces from "./pieces";
 import Piece from "../engine/Piece";
 import { Type } from "../engine/Type";
 import { Color } from "../engine/Color";
@@ -35,13 +35,13 @@ Stylesheets.add(t => `
         background: ${t.colors.background.light};
         overflow: hidden;
         border-radius: 8px;
-        box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8);
+        box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1);
     }
 
     .Square {
         position: absolute;
-        width: ${SQUARE_WIDTH};
-        height: ${SQUARE_WIDTH};
+        width: ${SQUARE_WIDTH}px;
+        height: ${SQUARE_WIDTH}px;
         display: flex;
     }
 
@@ -87,7 +87,7 @@ const game = new Game().standardSetup()
 const WHITE = "darkseagreen"
 const BLACK = "seagreen"
 function board(c: Context) {
-    let { state, end, html: { div, img } } = c
+    let { state, end, text, html: { div, img } } = c
     let gameState = state.get(GameState.key)
     let {selectX, selectY} = gameState
 
@@ -110,8 +110,8 @@ function board(c: Context) {
                 div({
                     class: `Square ${highlighted ? "Square_highlighted" : ""}`,
                     style: `
-                        left: ${x * SQUARE_WIDTH};
-                        top: ${y * SQUARE_WIDTH};
+                        left: ${x * SQUARE_WIDTH}px;
+                        top: ${y * SQUARE_WIDTH}px;
                         background: ${color}; `,
                     onclick() {
                         if (selected) {
@@ -129,12 +129,13 @@ function board(c: Context) {
                         let colorName = Color[piece.color]
                         let typeName = Type[piece.type]
                         let pieceName = colorName.toLowerCase() + typeName
-                        img({
-                            src: pieces[pieceName],
-                            class: `Piece ${ (selected || highlighted) ? "Piece_highlighted" : "" }`,
-                            draggable: false
-                        })
-                        end()
+                        text(pieceName)
+                        // img({
+                        //     src: pieces[pieceName],
+                        //     class: `Piece ${ (selected || highlighted) ? "Piece_highlighted" : "" }`,
+                        //     draggable: false
+                        // })
+                        // end()
                     }
                 end()
 

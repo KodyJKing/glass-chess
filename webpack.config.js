@@ -1,18 +1,20 @@
-const path = require("path")
-const webpack = require("webpack")
-const webroot = path.join(__dirname, "www")
-const BundleAnalyzer = require("webpack-bundle-analyzer").BundleAnalyzerPlugin
 
-const config = {
-    entry: "./lib/app/main.js",
+// must add local build path to node paths
+module.paths.push("/home/kody/code/glass/build/node_modules")
+const path = require("path") 
+const webroot = path.join(process.cwd(), "./lib/www")
+const webpack = require("webpack")
+let config = {
+    entry: {"index":"./lib/www/index.js","pieces/index":"./lib/www/pieces/index.js"},
     output: {
         path: webroot,
-        filename: "[name].js"
+        filename: "[name].pack.js",
+        publicPath: ""
     },
     devtool: "cheap-source-map",
     devServer: {
         contentBase: webroot,
-
+        hot: true,
         host: "0.0.0.0",
         port: 8080,
         proxy: [{
@@ -20,12 +22,11 @@ const config = {
             target: "http://localhost:3000",
             secure: false
         }]
-
     },
     module: {
         rules: [
             {
-                test: /\.svg$/,
+                test: /.svg$/,
                 loader: 'file-loader'
             }
         ]
@@ -33,6 +34,7 @@ const config = {
     //  ignore the node "crypto" which is required by sjcl
     plugins: [
         new webpack.IgnorePlugin(/^crypto$/),
+        new webpack.HotModuleReplacementPlugin()
     ]
 }
 
@@ -44,6 +46,7 @@ module.exports = (env, argv) => {
         console.log("PRODUCTION")
     } else {
         console.log("DEBUG")
+        const BundleAnalyzer = require("webpack-bundle-analyzer").BundleAnalyzerPlugin
         config.plugins.push(new BundleAnalyzer())
     }
 
