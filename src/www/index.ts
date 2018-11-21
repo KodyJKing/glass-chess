@@ -9,7 +9,6 @@ import State from "glass-platform/data/State"
 
 import { Game } from "../engine/Game";
 import Position from "../engine/Position";
-// import pieces from "./pieces";
 import Piece from "../engine/Piece";
 import { Type } from "../engine/Type";
 import { Color } from "../engine/Color";
