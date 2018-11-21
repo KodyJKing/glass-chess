@@ -129,13 +129,12 @@ function board(c: Context) {
                         let colorName = Color[piece.color]
                         let typeName = Type[piece.type]
                         let pieceName = colorName.toLowerCase() + typeName
-                        text(pieceName)
-                        // img({
-                        //     src: pieces[pieceName],
-                        //     class: `Piece ${ (selected || highlighted) ? "Piece_highlighted" : "" }`,
-                        //     draggable: false
-                        // })
-                        // end()
+                        img({
+                            src: "/pieces/" + pieceName + ".svg",
+                            class: `Piece ${ (selected || highlighted) ? "Piece_highlighted" : "" }`,
+                            draggable: false
+                        })
+                        end()
                     }
                 end()
 
