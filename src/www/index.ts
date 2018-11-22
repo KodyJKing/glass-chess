@@ -150,7 +150,7 @@ class GamePage extends Page {
         let gameState = state.get(GameState.key)
 
         div({ class: "Game" })
-            div({style: "flex-grow: 1;"}); end()
+            div({ style: "flex-grow: 1;" }); end()
             div({ style: "margin: 16px;" })
                 div({ style: "padding-bottom: 8px;" })
                     h1("Glass Chess")
@@ -169,7 +169,7 @@ class GamePage extends Page {
                     })
                 end()
             end()
-            div({style: "flex-grow: 1;"}); end()
+            div({ style: "flex-grow: 1;" }); end()
         end()
     }
 

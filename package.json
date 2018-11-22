@@ -15,5 +15,6 @@
         "ava": "^0.25.0",
         "express": "^4.16.4",
         "glass-platform": "*"
-    }
+    },
+    "link": { "glass-platform": true }
 }
