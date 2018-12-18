@@ -1,18 +1,17 @@
-import SignupForm from "glass-platform/html/components/SignupForm"
-import Checkbox from "glass-platform/html/components/Checkbox"
-import Stylesheets from "glass-platform/html/Stylesheets"
-import Context from "glass-platform/html/Context"
-import Page from "glass-platform/html/Page"
-import Key, { ModelKey } from "glass-platform/data/Key"
-import Model from "glass-platform/data/Model"
-import State from "glass-platform/data/State"
+// import SignupForm from "@krisnye/glass-platform/html/components/SignupForm"
+import Checkbox from "@krisnye/glass-platform/html/components/Checkbox"
+import Stylesheets from "@krisnye/glass-platform/html/Stylesheets"
+import Context from "@krisnye/glass-platform/html/Context"
+import Key, { ModelKey } from "@krisnye/glass-platform/data/Key"
+import Model from "@krisnye/glass-platform/data/Model"
+import State from "@krisnye/glass-platform/data/State"
 
-import { Game } from "../engine/Game";
-import Position from "../engine/Position";
-import Piece from "../engine/Piece";
-import { Type } from "../engine/Type";
-import { Color } from "../engine/Color";
-import Move from "../engine/Move";
+import { Game } from "../engine/Game"
+import Position from "../engine/Position"
+import Piece from "../engine/Piece"
+import { Type } from "../engine/Type"
+import { Color } from "../engine/Color"
+import Move from "../engine/Move"
 
 const WIDTH = 800
 const SQUARE_WIDTH = WIDTH / 8
@@ -86,8 +85,8 @@ const game = new Game().standardSetup()
 const WHITE = "darkseagreen"
 const BLACK = "seagreen"
 function board(c: Context) {
-    let { state, end, text, html: { div, img } } = c
-    let gameState = state.get(GameState.key)
+    let { store, end, text, html: { div, img } } = c
+    let gameState = store.get(GameState.key)
     let {selectX, selectY} = gameState
 
     let selectPos = Position.create(selectX, selectY)
@@ -114,13 +113,13 @@ function board(c: Context) {
                         background: ${color}; `,
                     onclick() {
                         if (selected) {
-                            state.patch(GameState.key, {selectX: -1, selectY: -1})
+                            store.patch(GameState.key, {selectX: -1, selectY: -1})
                         } else if (highlighted) {
                             game.doMove(move)
-                            state.patch(GameState.key, {selectX: -1, selectY: -1})
+                            store.patch(GameState.key, {selectX: -1, selectY: -1})
                         } else {
                             if (piece.color === game.turn || gameState.debug)
-                                state.patch(GameState.key, {selectX: x, selectY: y})
+                                store.patch(GameState.key, {selectX: x, selectY: y})
                         }
                     }
                 })
@@ -142,37 +141,30 @@ function board(c: Context) {
     end()
 }
 
-class GamePage extends Page {
-    render(c: Context) {
-        // c.render(SignupForm, "/api/signup")
+Context.bind(c => {
+    let { store, render, localize, text, begin, end, empty, html: { div, img, form, label, span, input, h1 } } = c
+    let gameState = store.get(GameState.key)
 
-        let { state, render, localize, text, begin, end, empty, html: { div, img, form, label, span, input, h1 } } = c
-        let gameState = state.get(GameState.key)
-
-        div({ class: "Game" })
-            div({ style: "flex-grow: 1;" }); end()
-            div({ style: "margin: 16px;" })
-                div({ style: "padding-bottom: 8px;" })
-                    h1("Glass Chess")
-                end()
-                render(board)
-                div({ style: "padding-top: 8px; display: flex" })
-                    text("Turn: " + Color[game.turn])
-                    div({ style: "flex-grow: 1" }); end()
-                    text("Debug")
-                    render(Checkbox, {
-                        id: "debug",
-                        value: gameState.debug,
-                        onchange(this: HTMLInputElement){
-                            state.patch(GameState.key, { debug: this.checked })
-                        }
-                    })
-                end()
+    div({ class: "Game" })
+        div({ style: "flex-grow: 1;" }); end()
+        div({ style: "margin: 16px;" })
+            div({ style: "padding-bottom: 8px;" })
+                h1("Glass Chess")
             end()
-            div({ style: "flex-grow: 1;" }); end()
+            render(board)
+            div({ style: "padding-top: 8px; display: flex" })
+                text("Turn: " + Color[game.turn])
+                div({ style: "flex-grow: 1" }); end()
+                text("Debug")
+                render(Checkbox, {
+                    id: "debug",
+                    value: gameState.debug,
+                    onchange(this: HTMLInputElement){
+                        store.patch(GameState.key, { debug: this.checked })
+                    }
+                })
+            end()
         end()
-    }
-
-}
-
-GamePage.show()
+        div({ style: "flex-grow: 1;" }); end()
+    end()
+})

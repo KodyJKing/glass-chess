@@ -5,3 +5,7 @@ lib
 node_modules
 tsconfig.json
 webpack.config.js
+webpack.server.js
+app.yaml
+.gcloudignore
+.npmrc
