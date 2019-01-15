@@ -1,7 +1,8 @@
 // import SignupForm from "@krisnye/glass-platform/html/components/SignupForm"
-import Checkbox from "@krisnye/glass-platform/html/components/Checkbox"
-import Stylesheets from "@krisnye/glass-platform/html/Stylesheets"
-import Context from "@krisnye/glass-platform/html/Context"
+import Checkbox from "@krisnye/glass-platform/ui/html/components/Checkbox"
+import Stylesheets from "@krisnye/glass-platform/ui/html/Stylesheets"
+import HtmlContext from "@krisnye/glass-platform/ui/html/HtmlContext"
+import Context from "@krisnye/glass-platform/ui/Context"
 import Key, { ModelKey } from "@krisnye/glass-platform/data/Key"
 import Model from "@krisnye/glass-platform/data/Model"
 import State from "@krisnye/glass-platform/data/State"
@@ -85,7 +86,8 @@ const game = new Game().standardSetup()
 const WHITE = "darkseagreen"
 const BLACK = "seagreen"
 function board(c: Context) {
-    let { store, end, text, html: { div, img } } = c
+    let { store, localize, text } = c
+    let { render, end, div, img } = HtmlContext(c)
     let gameState = store.get(GameState.key)
     let {selectX, selectY} = gameState
 
@@ -142,7 +144,8 @@ function board(c: Context) {
 }
 
 Context.bind(c => {
-    let { store, render, localize, text, begin, end, empty, html: { div, img, form, label, span, input, h1 } } = c
+    let { store, localize, text } = c
+    let { render, end, div, h1 } = HtmlContext(c)
     let gameState = store.get(GameState.key)
 
     div({ class: "Game" })
