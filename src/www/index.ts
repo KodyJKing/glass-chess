@@ -151,25 +151,25 @@ Context.bind(c => {
     let gameState = store.get(GameState.key)
 
     div({ class: "Game" })
-    div({ style: "flex-grow: 1;" }); end()
-    div({ style: "margin: 16px;" })
-    div({ style: "padding-bottom: 8px;" })
-    h1("Glass Chess")
-    end()
-    render(board)
-    div({ style: "padding-top: 8px; display: flex" })
-    text("Turn: " + Color[game.turn])
-    div({ style: "flex-grow: 1" }); end()
-    text("Debug")
-    render(Checkbox, {
-        id: "debug",
-        value: gameState.debug,
-        onchange(this: HTMLInputElement) {
-            store.patch(GameState.key, { debug: this.checked })
-        }
-    })
-    end()
-    end()
-    div({ style: "flex-grow: 1;" }); end()
+        div({ style: "flex-grow: 1;" }); end()
+            div({ style: "margin: 16px;" })
+                div({ style: "padding-bottom: 8px;" })
+                h1("Glass Chess")
+                end()
+                render(board)
+                div({ style: "padding-top: 8px; display: flex" })
+                    text("Turn: " + Color[game.turn])
+                    div({ style: "flex-grow: 1" }); end()
+                    text("Debug")
+                    render(Checkbox, {
+                        id: "debug",
+                        value: gameState.debug,
+                        onchange(this: HTMLInputElement) {
+                            store.patch(GameState.key, { debug: this.checked })
+                        }
+                    })
+                end()
+            end()
+        div({ style: "flex-grow: 1;" }); end()
     end()
 })
