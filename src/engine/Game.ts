@@ -180,7 +180,7 @@ export class Game {
         return false
     }
 
-    tryCastle(to, from, undo) {
+    tryCastle(to, from, undo: boolean) {
         let dx = posX(to) - posX(from)
         if (Math.abs(dx) < 2)
             return
