@@ -25,6 +25,8 @@ Stylesheets.add(t => `
         top: 0px;
         left: 0px;
         user-select: none;
+        background: #262626;
+        color: white;
     }
 
     .Board {
@@ -89,7 +91,7 @@ function board(c: Context) {
     let { store, localize, text } = c
     let { render, end, div, img } = HtmlContext(c)
     let gameState = store.get(GameState.key)
-    let {selectX, selectY} = gameState
+    let { selectX, selectY } = gameState
 
     let selectPos = Position.create(selectX, selectY)
     let moves = game.generateSafeMovesAt(selectPos)
@@ -98,48 +100,48 @@ function board(c: Context) {
         selection[Move.get.to(move)] = move
 
     div({ class: "Board" })
-        for (let x = 0; x < 8; x++) {
-            for (let y = 0; y < 8; y++) {
-                let pos = Position.create(x, y)
-                let piece = Piece.toObject(game.pieces[pos])
-                let move = selection[pos]
-                let highlighted = move !== undefined
-                let selected = x == selectX && y == selectY
-                let color = (x + y) % 2 == 0 ? WHITE : BLACK
+    for (let x = 0; x < 8; x++) {
+        for (let y = 0; y < 8; y++) {
+            let pos = Position.create(x, y)
+            let piece = Piece.toObject(game.pieces[pos])
+            let move = selection[pos]
+            let highlighted = move !== undefined
+            let selected = x == selectX && y == selectY
+            let color = (x + y) % 2 == 0 ? WHITE : BLACK
 
-                div({
-                    class: `Square ${highlighted ? "Square_highlighted" : ""}`,
-                    style: `
+            div({
+                class: `Square ${highlighted ? "Square_highlighted" : ""}`,
+                style: `
                         left: ${x * SQUARE_WIDTH}px;
                         top: ${y * SQUARE_WIDTH}px;
                         background: ${color}; `,
-                    onclick() {
-                        if (selected) {
-                            store.patch(GameState.key, {selectX: -1, selectY: -1})
-                        } else if (highlighted) {
-                            game.doMove(move)
-                            store.patch(GameState.key, {selectX: -1, selectY: -1})
-                        } else {
-                            if (piece.color === game.turn || gameState.debug)
-                                store.patch(GameState.key, {selectX: x, selectY: y})
-                        }
+                onclick() {
+                    if (selected) {
+                        store.patch(GameState.key, { selectX: -1, selectY: -1 })
+                    } else if (highlighted) {
+                        game.doMove(move)
+                        store.patch(GameState.key, { selectX: -1, selectY: -1 })
+                    } else {
+                        if (piece.color === game.turn || gameState.debug)
+                            store.patch(GameState.key, { selectX: x, selectY: y })
                     }
+                }
+            })
+            if (piece.type != Type.Empty) {
+                let colorName = Color[piece.color]
+                let typeName = Type[piece.type]
+                let pieceName = colorName.toLowerCase() + typeName
+                img({
+                    src: "/pieces/" + pieceName + ".svg",
+                    class: `Piece ${(selected || highlighted) ? "Piece_highlighted" : ""}`,
+                    draggable: false
                 })
-                    if (piece.type != Type.Empty) {
-                        let colorName = Color[piece.color]
-                        let typeName = Type[piece.type]
-                        let pieceName = colorName.toLowerCase() + typeName
-                        img({
-                            src: "/pieces/" + pieceName + ".svg",
-                            class: `Piece ${ (selected || highlighted) ? "Piece_highlighted" : "" }`,
-                            draggable: false
-                        })
-                        end()
-                    }
                 end()
-
             }
+            end()
+
         }
+    }
     end()
 }
 
@@ -149,25 +151,25 @@ Context.bind(c => {
     let gameState = store.get(GameState.key)
 
     div({ class: "Game" })
-        div({ style: "flex-grow: 1;" }); end()
-        div({ style: "margin: 16px;" })
-            div({ style: "padding-bottom: 8px;" })
-                h1("Glass Chess")
-            end()
-            render(board)
-            div({ style: "padding-top: 8px; display: flex" })
-                text("Turn: " + Color[game.turn])
-                div({ style: "flex-grow: 1" }); end()
-                text("Debug")
-                render(Checkbox, {
-                    id: "debug",
-                    value: gameState.debug,
-                    onchange(this: HTMLInputElement){
-                        store.patch(GameState.key, { debug: this.checked })
-                    }
-                })
-            end()
-        end()
-        div({ style: "flex-grow: 1;" }); end()
+    div({ style: "flex-grow: 1;" }); end()
+    div({ style: "margin: 16px;" })
+    div({ style: "padding-bottom: 8px;" })
+    h1("Glass Chess")
+    end()
+    render(board)
+    div({ style: "padding-top: 8px; display: flex" })
+    text("Turn: " + Color[game.turn])
+    div({ style: "flex-grow: 1" }); end()
+    text("Debug")
+    render(Checkbox, {
+        id: "debug",
+        value: gameState.debug,
+        onchange(this: HTMLInputElement) {
+            store.patch(GameState.key, { debug: this.checked })
+        }
+    })
+    end()
+    end()
+    div({ style: "flex-grow: 1;" }); end()
     end()
 })
