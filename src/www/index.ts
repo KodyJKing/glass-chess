@@ -13,9 +13,14 @@ import Piece from "../engine/Piece"
 import { Type } from "../engine/Type"
 import { Color } from "../engine/Color"
 import Move from "../engine/Move"
+import Store from "@krisnye/glass-platform/data/Store";
 
 const WIDTH = 800
 const SQUARE_WIDTH = WIDTH / 8
+
+const WHITE = "darkseagreen"
+const BLACK = "seagreen"
+const OUTLINE = "#256F46"
 
 Stylesheets.add(t => `
     .Game {
@@ -50,6 +55,8 @@ Stylesheets.add(t => `
         filter: saturate(125%) brightness(110%);
         box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.25);
         z-index: 1;
+        marigin: 2px;
+        outline: ${OUTLINE} 3px solid;
     }
 
     .Piece {
@@ -85,8 +92,6 @@ class GameState extends State {
 
 const game = new Game().standardSetup()
 
-const WHITE = "darkseagreen"
-const BLACK = "seagreen"
 function board(c: Context) {
     let { store, localize, text } = c
     let { render, end, div, img } = HtmlContext(c)
@@ -100,8 +105,10 @@ function board(c: Context) {
         selection[Move.get.to(move)] = move
 
     div({ class: "Board" })
-    for (let x = 0; x < 8; x++) {
-        for (let y = 0; y < 8; y++) {
+    for (let _x = 0; _x < 8; _x++) {
+        for (let _y = 0; _y < 8; _y++) {
+            let y = (game.turn == Color.White) ? _y : 7 - _y
+            let x = (game.turn == Color.White) ? _x : 7 - _x
             let pos = Position.create(x, y)
             let piece = Piece.toObject(game.pieces[pos])
             let move = selection[pos]
@@ -112,8 +119,8 @@ function board(c: Context) {
             div({
                 class: `Square ${highlighted ? "Square_highlighted" : ""}`,
                 style: `
-                        left: ${x * SQUARE_WIDTH}px;
-                        top: ${y * SQUARE_WIDTH}px;
+                        left: ${_x * SQUARE_WIDTH}px;
+                        top: ${_y * SQUARE_WIDTH}px;
                         background: ${color}; `,
                 onclick() {
                     if (selected) {
