@@ -26,6 +26,7 @@ Stylesheets.add(t => `
     .Game {
         display: flex;
         width: 100vw;
+        height: 100vh;
         position: absolute;
         top: 0px;
         left: 0px;
