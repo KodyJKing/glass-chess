@@ -1,4 +1,3 @@
-// import SignupForm from "@krisnye/glass-platform/html/components/SignupForm"
 import Checkbox from "@krisnye/glass-platform/ui/html/components/Checkbox"
 import Stylesheets from "@krisnye/glass-platform/ui/html/Stylesheets"
 import HtmlContext from "@krisnye/glass-platform/ui/html/HtmlContext"
@@ -7,14 +6,12 @@ import Key, { ModelKey } from "@krisnye/glass-platform/data/Key"
 import Model from "@krisnye/glass-platform/data/Model"
 import State from "@krisnye/glass-platform/data/State"
 
-import { Game } from "../engine/Game"
+import { Engine } from "../engine/Engine"
 import Position from "../engine/Position"
 import Piece from "../engine/Piece"
 import { Type } from "../engine/Type"
 import { Color } from "../engine/Color"
 import Move from "../engine/Move"
-import Store from "@krisnye/glass-platform/data/Store";
-import ColorSettings from "@krisnye/glass-platform/ui/html/style/ColorSettings";
 
 const WIDTH = 800
 const SQUARE_WIDTH = WIDTH / 8
@@ -71,7 +68,7 @@ Stylesheets.add(t => `
 
     .Piece {
         flex-grow: 1;
-        transition: transform .6s ease-in-out;
+        transition: transform .7s ease-in-out;
     }
 
     .Piece_highlighted {
@@ -80,7 +77,7 @@ Stylesheets.add(t => `
 `)
 
 @Model.class()
-class GameState extends State {
+class AppState extends State {
     @Model.property({ type: "number", default: -1 })
     selectX!: number
 
@@ -97,30 +94,30 @@ class GameState extends State {
     debug!: boolean
 
     static readonly store = "memory"
-    static key = Key.create(GameState, "0")
+    static key = Key.create(AppState, "0")
 }
 
-const game = new Game().standardSetup()
+const engine = new Engine().standardSetup()
 
 function board(c: Context) {
     let { store, localize, text } = c
     let { render, end, div, img } = HtmlContext(c)
-    let gameState = store.get(GameState.key)
-    let { selectX, selectY } = gameState
+    let appState = store.get(AppState.key)
+    let { selectX, selectY } = appState
 
     let selectPos = Position.create(selectX, selectY)
-    let moves = game.generateSafeMovesAt(selectPos)
+    let moves = engine.generateSafeMovesAt(selectPos)
     let selection = {}
     for (let move of moves)
         selection[Move.get.to(move)] = move
 
-    let rotate = game.turn === Color.Black
+    let rotate = engine.turn === Color.Black
 
     div({ class: "Board" + (rotate ? " Rotated" : "") })
     for (let x = 0; x < 8; x++) {
         for (let y = 0; y < 8; y++) {
             let pos = Position.create(x, y)
-            let piece = Piece.toObject(game.pieces[pos])
+            let piece = Piece.toObject(engine.pieces[pos])
             let move = selection[pos]
             let highlighted = move !== undefined
             let selected = x == selectX && y == selectY
@@ -134,13 +131,13 @@ function board(c: Context) {
                         background: ${color}; `,
                 onclick() {
                     if (selected) {
-                        store.patch(GameState.key, { selectX: -1, selectY: -1 })
+                        store.patch(AppState.key, { selectX: -1, selectY: -1 })
                     } else if (highlighted) {
-                        game.doMove(move)
-                        store.patch(GameState.key, { selectX: -1, selectY: -1 })
+                        engine.doMove(move)
+                        store.patch(AppState.key, { selectX: -1, selectY: -1 })
                     } else {
-                        if (piece.color === game.turn || gameState.debug)
-                            store.patch(GameState.key, { selectX: x, selectY: y })
+                        if (piece.color === engine.turn || appState.debug)
+                            store.patch(AppState.key, { selectX: x, selectY: y })
                     }
                 }
             })
@@ -165,7 +162,7 @@ function board(c: Context) {
 Context.bind(c => {
     let { store, localize, text } = c
     let { render, end, div, h1 } = HtmlContext(c)
-    let gameState = store.get(GameState.key)
+    let appState = store.get(AppState.key)
 
     div({ class: "Game" })
         div({ style: "flex-grow: 1;" }); end()
@@ -175,14 +172,14 @@ Context.bind(c => {
                 end()
                 render(board)
                 div({ style: "padding-top: 8px; display: flex" })
-                    text("Turn: " + Color[game.turn])
+                    text("Turn: " + Color[engine.turn])
                     div({ style: "flex-grow: 1" }); end()
                     text("Debug")
                     render(Checkbox, {
                         id: "debug",
-                        value: gameState.debug,
+                        value: appState.debug,
                         onchange(this: HTMLInputElement) {
-                            store.patch(GameState.key, { debug: this.checked })
+                            store.patch(AppState.key, { debug: this.checked })
                         }
                     })
                 end()

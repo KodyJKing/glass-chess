@@ -1,5 +1,5 @@
 import test from "ava"
-import { Game } from "./Game";
+import { Engine } from "./Engine";
 import Position from "./Position";
 import Piece from "./Piece";
 import { Type } from "./Type";
@@ -24,15 +24,15 @@ test("parseBoard", t => {
         . . . . . . . .
         P P P P P P P P
         R N B Q K B N R`
-    let game = Game.parseBoard(board)
-    t.true(compareBoards(board, game.toString()))
+    let engine = Engine.parseBoard(board)
+    t.true(compareBoards(board, engine.toString()))
     t.pass()
 })
 
 test("generateMoves_Rook", t => {
-    let game = new Game().standardSetup()
+    let engine = new Engine().standardSetup()
     let pos = Position.create(0, 2)
-    game.pieces[pos] = Piece.create(Type.Rook, Color.Black, 0)
+    engine.pieces[pos] = Piece.create(Type.Rook, Color.Black, 0)
 
     let expected = `
         r n b q k b n r
@@ -44,15 +44,15 @@ test("generateMoves_Rook", t => {
         # P P P P P P P
         R N B Q K B N R`
 
-    // console.log("\n" + game.toString())
-    let moves = game.generateMovesAt(pos)
-    let actual = game.toString(moves)
+    // console.log("\n" + engine.toString())
+    let moves = engine.generateMovesAt(pos)
+    let actual = engine.toString(moves)
     t.true(compareBoards(expected, actual))
     // console.log("\n" + actual)
 })
 
 test("generateMoves_Pawn", t => {
-    let game = new Game().standardSetup()
+    let engine = new Engine().standardSetup()
     let pos = Position.create(0, 1)
 
     let expected = `
@@ -65,18 +65,18 @@ test("generateMoves_Pawn", t => {
         P P P P P P P P
         R N B Q K B N R`
 
-    // console.log("\n" + game.toString())
-    let moves = game.generateMovesAt(pos)
-    let actual = game.toString(moves)
+    // console.log("\n" + engine.toString())
+    let moves = engine.generateMovesAt(pos)
+    let actual = engine.toString(moves)
     t.true(compareBoards(expected, actual))
     // console.log("\n" + actual)
 })
 
 
 test("generateMoves_Knight", t => {
-    let game = new Game()
+    let engine = new Engine()
     let pos = Position.create(3, 3)
-    game.pieces[pos] = Piece.create(Type.Knight, Color.Black, 0)
+    engine.pieces[pos] = Piece.create(Type.Knight, Color.Black, 0)
 
     let expected = `
          . . . . . . . .
@@ -88,36 +88,36 @@ test("generateMoves_Knight", t => {
          . . . . . . . .
          . . . . . . . .`
 
-    // console.log("\n" + game.toString())
-    let moves = game.generateMovesAt(pos)
-    let actual = game.toString(moves)
+    // console.log("\n" + engine.toString())
+    let moves = engine.generateMovesAt(pos)
+    let actual = engine.toString(moves)
     t.true(compareBoards(expected, actual))
     // console.log("\n" + actual)
 })
 
 
 test("isSafe", t => {
-    let game = new Game()
+    let engine = new Engine()
     let pos = Position.create(3, 3)
-    game.pieces[pos] = Piece.create(Type.Knight, Color.Black, 0)
+    engine.pieces[pos] = Piece.create(Type.Knight, Color.Black, 0)
 
-    // console.log("\n" + game.toString())
-    t.true(game.isSafe(pos, Color.Black))
-    game.pieces[Position.create(3, 0)] = Piece.create(Type.Queen, Color.White, 0)
-    // console.log("\n" + game.toString())
-    t.false(game.isSafe(pos, Color.Black))
+    // console.log("\n" + engine.toString())
+    t.true(engine.isSafe(pos, Color.Black))
+    engine.pieces[Position.create(3, 0)] = Piece.create(Type.Queen, Color.White, 0)
+    // console.log("\n" + engine.toString())
+    t.false(engine.isSafe(pos, Color.Black))
 })
 
 // test("moveGenPerformance", t => {
-//     let game = new Game().standardSetup()
+//     let engine = new Game().standardSetup()
 //     let pos = Position.create(0, 2)
-//     game.pieces[pos] = Piece.create(Type.Rook, Color.Black, 0)
+//     engine.pieces[pos] = Piece.create(Type.Rook, Color.Black, 0)
 
-//     // console.log("\n" + game.toString())
-//     let moves = game.generateMovesAt(pos)
+//     // console.log("\n" + engine.toString())
+//     let moves = engine.generateMovesAt(pos)
 //     console.time("moveGen")
 //     for (let i = 0; i < 10000; i++)
-//         game.generateMovesAt(pos)
+//         engine.generateMovesAt(pos)
 //     console.timeEnd("moveGen")
 
 //     t.pass()

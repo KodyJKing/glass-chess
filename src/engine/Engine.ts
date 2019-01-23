@@ -12,7 +12,7 @@ const posY = Position.get.y
 const EMPTY = Piece.create(0, 0, 0)
 
 enum Ternary { always, never, either }
-export class Game {
+export class Engine {
 
     // Representation
 
@@ -44,13 +44,13 @@ export class Game {
                     .split("")                // Convert to char array.
                     .map(charToPiece)
             )
-        let game = new Game()
+        let engine = new Engine()
         for (let y = 0; y < 8; y++) {
             for (let x = 0; x < 8; x++) {
-                game.pieces[Pos(x, y)] = rows[y][x]
+                engine.pieces[Pos(x, y)] = rows[y][x]
             }
         }
-        return game
+        return engine
     }
 
     toString(moves?: number[]) {
