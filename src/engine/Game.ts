@@ -281,4 +281,19 @@ export class Game {
         }
         return true
     }
+
+    allMoves() {
+        let moves: number[] = []
+        for (let x = 0; x < 8; x++) {
+            for (let y = 0; y < 8; y++) {
+                let pos = Pos(x, y)
+                let piece = this.pieces[pos]
+                if (Piece.get.color(piece) !== this.turn || Piece.get.type(piece) === Type.Empty)
+                    continue
+                for (let move of this.generateSafeMovesAt(pos))
+                    moves.push(move)
+            }
+        }
+        return moves
+    }
 }

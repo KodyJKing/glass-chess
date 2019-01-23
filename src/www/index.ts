@@ -14,6 +14,7 @@ import { Type } from "../engine/Type"
 import { Color } from "../engine/Color"
 import Move from "../engine/Move"
 import Store from "@krisnye/glass-platform/data/Store";
+import ColorSettings from "@krisnye/glass-platform/ui/html/style/ColorSettings";
 
 const WIDTH = 800
 const SQUARE_WIDTH = WIDTH / 8
@@ -43,6 +44,11 @@ Stylesheets.add(t => `
         overflow: hidden;
         border-radius: 8px;
         box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1);
+        transition: transform .5s ease-in-out;
+    }
+
+    .Rotated {
+        transform:rotate(180deg);
     }
 
     .Square {
@@ -56,12 +62,16 @@ Stylesheets.add(t => `
         filter: saturate(125%) brightness(110%);
         box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.25);
         z-index: 1;
-        marigin: 2px;
+        margin-left: 1.5px;
+        margin-top: 1.5px;
         outline: ${OUTLINE} 3px solid;
+        width: ${SQUARE_WIDTH - 3}px;
+        height: ${SQUARE_WIDTH - 3}px;
     }
 
     .Piece {
         flex-grow: 1;
+        transition: transform .6s ease-in-out;
     }
 
     .Piece_highlighted {
@@ -71,7 +81,6 @@ Stylesheets.add(t => `
 
 @Model.class()
 class GameState extends State {
-
     @Model.property({ type: "number", default: -1 })
     selectX!: number
 
@@ -105,11 +114,11 @@ function board(c: Context) {
     for (let move of moves)
         selection[Move.get.to(move)] = move
 
-    div({ class: "Board" })
-    for (let _x = 0; _x < 8; _x++) {
-        for (let _y = 0; _y < 8; _y++) {
-            let y = (game.turn == Color.White) ? _y : 7 - _y
-            let x = (game.turn == Color.White) ? _x : 7 - _x
+    let rotate = game.turn === Color.Black
+
+    div({ class: "Board" + (rotate ? " Rotated" : "") })
+    for (let x = 0; x < 8; x++) {
+        for (let y = 0; y < 8; y++) {
             let pos = Position.create(x, y)
             let piece = Piece.toObject(game.pieces[pos])
             let move = selection[pos]
@@ -120,8 +129,8 @@ function board(c: Context) {
             div({
                 class: `Square ${highlighted ? "Square_highlighted" : ""}`,
                 style: `
-                        left: ${_x * SQUARE_WIDTH}px;
-                        top: ${_y * SQUARE_WIDTH}px;
+                        left: ${x * SQUARE_WIDTH}px;
+                        top: ${y * SQUARE_WIDTH}px;
                         background: ${color}; `,
                 onclick() {
                     if (selected) {
@@ -141,7 +150,7 @@ function board(c: Context) {
                 let pieceName = colorName.toLowerCase() + typeName
                 img({
                     src: "/pieces/" + pieceName + ".svg",
-                    class: `Piece ${(selected || highlighted) ? "Piece_highlighted" : ""}`,
+                    class: `Piece ${(selected || highlighted) ? "Piece_highlighted" : ""} ${rotate ? " Rotated" : ""}`,
                     draggable: false
                 })
                 end()
