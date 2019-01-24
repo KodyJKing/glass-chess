@@ -12,15 +12,35 @@ const posY = Position.get.y
 const EMPTY = Piece.create(0, 0, 0)
 
 enum Ternary { always, never, either }
+
+ const pieceValues = [
+     0,       // Empty
+     1,       // Pawn
+     3,       // Knight
+     3,       // Bishop
+     5,       // Rook
+     9,       // Queen
+     99999    // King
+ ]
+
 export class Engine {
 
     // Representation
 
-    pieces: Uint8Array
-    turn: Color
+    pieces!: Uint8Array
+    turn!: Color
+    netMaterialValue!: number
+    history!: number[]
     constructor() {
+        try { (window as any).engine = this } catch (e) {}
+        this.clear()
+    }
+
+    clear() {
         this.pieces = new Uint8Array(64)
         this.turn = Color.White
+        this.netMaterialValue = 0
+        this.history = []
     }
 
     standardSetup() {
@@ -162,7 +182,7 @@ export class Engine {
     rookVisible(pos: number, color: Color, dx: number) {
         let x = posX(pos)
         let y = posY(pos)
-        while (true) {
+        while (x >= 0 && x <= 7) {
             x += dx
             let piece = this.pieces[Pos(x, y)]
             let type = Piece.get.type(piece)
@@ -200,12 +220,23 @@ export class Engine {
         }
     }
 
+    updateMaterial(move: number, undo: boolean) {
+        let type = Piece.get.type(Move.get.captured(move))
+        let isBlack = this.turn === Color.Black
+        let sign = (isBlack === undo) ?  1 : -1
+        this.netMaterialValue += sign * pieceValues[type]
+    }
+
     doMove(move: number) {
+        this.history.push(move)
+
         let from = Move.get.from(move)
         let to = Move.get.to(move)
         let piece = this.pieces[from]
         this.pieces[from] = EMPTY
         this.pieces[to] = Piece.set.moved(piece, 1)
+
+        this.updateMaterial(move, false)
 
         this.turn = (this.turn + 1) % 2
 
@@ -213,7 +244,8 @@ export class Engine {
             this.tryCastle(to, from, false)
     }
 
-    undoMove(move: number) {
+    undoMove() {
+        let move = this.history.pop() as number
         let from = Move.get.from(move)
         let to = Move.get.to(move)
         let piece = this.pieces[to]
@@ -222,6 +254,8 @@ export class Engine {
         this.pieces[to] = Move.get.captured(move)
 
         this.turn = (this.turn + 1) % 2
+
+        this.updateMaterial(move, true)
 
         if (Piece.get.type(piece) === Type.King)
             this.tryCastle(to, from, true)
@@ -262,7 +296,7 @@ export class Engine {
             let kingPos = this.kingPos(turn)
             if (kingPos == null || this.isSafe(kingPos, turn))
                 result.push(move)
-            this.undoMove(move)
+            this.undoMove()
         }
         return result
     }
@@ -282,7 +316,7 @@ export class Engine {
         return true
     }
 
-    allMoves() {
+    allMoves(safe = false) {
         let moves: number[] = []
         for (let x = 0; x < 8; x++) {
             for (let y = 0; y < 8; y++) {
@@ -290,10 +324,106 @@ export class Engine {
                 let piece = this.pieces[pos]
                 if (Piece.get.color(piece) !== this.turn || Piece.get.type(piece) === Type.Empty)
                     continue
-                for (let move of this.generateSafeMovesAt(pos))
+                let _moves = safe ? this.generateSafeMovesAt(pos) : this.generateMovesAt(pos)
+                for (let move of _moves)
                     moves.push(move)
             }
         }
         return moves
     }
+
+    inCheck() {
+        let pos = this.kingPos(this.turn)
+        return (pos === null) ? false : !this.isSafe(pos, this.turn)
+    }
+
+    inMate() {
+        return this.allMoves(true).length === 0
+    }
+
+    // AI
+
+    hashString(depth = 0) {
+        let parts = new Array(24)
+        // let parts = new Array(65)
+        let i = 0
+        for (let y = 0; y < 8; y++) {
+            // for (let x = 0; x < 8; x++)
+            //     parts[i++] = String.fromCharCode(this.pieces[Pos(x, y)])
+            for (let x = 0; x < 8; x += 3) {
+                parts[i++] = String.fromCharCode(
+                    (this.pieces[Pos(x, y)] << 10) |
+                    (this.pieces[Pos(x + 1, y)] << 5) |
+                    (this.pieces[Pos(x + 2, y)] || 0)
+                )
+            }
+        }
+        parts[i++] = depth
+        return parts.join("")
+    }
+
+    alphabeta(depth) {
+        const DO_TRANSPOSITIONS = false
+
+        let startTime = Date.now()
+        let leaves = 0
+        let transpositions = new Map<string, number>()
+
+        let search = (depth = 0, rootCall = true, alpha = -Infinity, beta = Infinity) => {
+            let hashString = DO_TRANSPOSITIONS ? this.hashString(depth) : ""
+            if (!rootCall && DO_TRANSPOSITIONS && transpositions.has(hashString))
+                return transpositions.get(hashString) as number
+
+            let isLeaf = depth === 0
+            let moves = this.allMoves()
+
+            let valueSign = (this.turn === Color.White) ? 1 : -1
+            let mobilityScore = moves.length * 0.5 * valueSign
+
+            let best: number | null = null
+            let bestValue = -Infinity * valueSign
+            for (let move of moves) {
+
+                let value = 0
+
+                let captured = Move.get.captured(move)
+                if (Piece.get.type(captured) === Type.King){
+                    value = Infinity * valueSign
+                } else {
+                    this.doMove(move)
+                    value = isLeaf ? (this.netMaterialValue + mobilityScore) : (search(depth - 1, false, alpha, beta) as number)
+                    if (isLeaf)
+                        leaves++
+                    this.undoMove()
+                }
+
+                if (value * valueSign > bestValue * valueSign) {
+                    best = move
+                    bestValue = value
+                    if (this.turn === Color.White)
+                        alpha = Math.max(alpha, bestValue)
+                    else
+                        beta = Math.min(beta, bestValue)
+                    if (alpha >= beta)
+                        break // The opponent will never allow this.
+                }
+
+            }
+
+            if (DO_TRANSPOSITIONS && isLeaf)
+                transpositions.set(hashString, bestValue)
+
+            return rootCall ? best : bestValue
+        }
+
+        let result = search(depth)
+
+        let dt = (Date.now() - startTime)
+        let _leaves = leaves.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        let leavesPerMs = (leaves / dt).toString().split(".")[0]
+        console.log(`${_leaves} leaves, ${dt} ms, ${leavesPerMs} leaves/ms.`)
+
+        return result
+    }
+
 }

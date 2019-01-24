@@ -45,7 +45,7 @@ Stylesheets.add(t => `
     }
 
     .Rotated {
-        transform:rotate(180deg);
+        // transform:rotate(180deg);
     }
 
     .Square {
@@ -161,8 +161,11 @@ function board(c: Context) {
 
 Context.bind(c => {
     let { store, localize, text } = c
-    let { render, end, div, h1 } = HtmlContext(c)
+    let { render, end, div, span, h1, button } = HtmlContext(c)
     let appState = store.get(AppState.key)
+
+    let check = engine.inCheck()
+    let mate = engine.inMate()
 
     div({ class: "Game" })
         div({ style: "flex-grow: 1;" }); end()
@@ -172,16 +175,53 @@ Context.bind(c => {
                 end()
                 render(board)
                 div({ style: "padding-top: 8px; display: flex" })
-                    text("Turn: " + Color[engine.turn])
+                    if (!mate) {
+                        text(`Turn: ${Color[engine.turn]}${ check ? ", Check" : ""}`)
+                        // text(`Turn: ${Color[engine.turn]}, Net Material Value: ${engine.netMaterialValue}`)
+                    } else {
+                        text(check ? "Checkmate!" : "Stalemate!")
+                    }
                     div({ style: "flex-grow: 1" }); end()
-                    text("Debug")
-                    render(Checkbox, {
-                        id: "debug",
-                        value: appState.debug,
-                        onchange(this: HTMLInputElement) {
-                            store.patch(AppState.key, { debug: this.checked })
+                    div({ style: "padding: 2px; display: flex" });
+                        text("Debug")
+                        render(Checkbox, {
+                            id: "debug",
+                            value: appState.debug,
+                            onchange(this: HTMLInputElement) {
+                                store.patch(AppState.key, { debug: this.checked })
+                            }
+                        })
+                    end()
+                    button({
+                        onclick() {
+                            engine.clear()
+                            engine.standardSetup()
+                            store.patch(AppState.key, { selectX: -1, selectY: -1 })
                         }
                     })
+                        text("Reset")
+                    end()
+                    button({
+                        onclick() {
+                            if (engine.history.length > 0)
+                                engine.undoMove()
+                            store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                        }
+                    })
+                        text("Undo")
+                    end()
+                    if (!mate) {
+                        button({
+                            onclick() {
+                                let move = engine.alphabeta(5)
+                                if (move !== null)
+                                    engine.doMove(move)
+                                store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                            }
+                        })
+                            text("Think")
+                        end()
+                    }
                 end()
             end()
         div({ style: "flex-grow: 1;" }); end()
