@@ -46,7 +46,7 @@ export default function struct(properties: [string, number][]) {
         get[name] = (struct: number) => (struct >> shift) & getMask
 
         let setMask = ~(getMask << shift) // Used to clear components bits.
-        set[name] = (struct: number, value: number) => (struct & setMask) | (value << shift)
+        set[name] = (struct: number, value: number) => (struct & setMask) | ((value & getMask) << shift)
     }
 
     return { create: fromArguments(_properties), toObject: toObject(_properties), fromObject: fromObject(_properties), get, set }
