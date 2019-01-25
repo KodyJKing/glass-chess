@@ -91,6 +91,22 @@ export class Engine {
         return result.join("\n")
     }
 
+    saveString() {
+        let parts = new Array()
+        for (let move of this.history)
+            parts.push(
+                String.fromCharCode(
+                    Move.set.firstMove(Move.set.captured(move, 0), 0)
+                )
+            )
+        return parts.join("")
+    }
+
+    fromSaveString(movesString: string) {
+        for (let i = 0; i < movesString.length; i++)
+            this.doMove(movesString.charCodeAt(i))
+    }
+
     // Move Generation
 
     slide(from: number, dx: number, dy: number, max: number, color: Color, captures: Ternary, moves: number[]): number {
@@ -246,6 +262,7 @@ export class Engine {
 
     undoMove() {
         let move = this.history.pop() as number
+
         let from = Move.get.from(move)
         let to = Move.get.to(move)
         let piece = this.pieces[to]
@@ -356,6 +373,25 @@ export class Engine {
         return parts.join("")
     }
 
+
+    optionsHeuristic(moves: number[]) {
+        let control = 0
+        let attacks = 0
+        for (let move of moves) {
+            let to = Move.get.to(move)
+            let x = Position.get.x(to)
+            let y = Position.get.y(to)
+            let xBonus = 3.5 - Math.abs(x - 3.5)
+            let yBonus = 3.5 - Math.abs(y - 3.5)
+            control += 1 + xBonus + yBonus
+
+            let capturedType = Piece.get.type(Move.get.captured(move))
+            if (capturedType !== Type.Empty)
+                attacks++
+        }
+        return (control + attacks) * 0.1
+    }
+
     totalSearchTime = 0
     alphabeta(depth = 5) {
         let startTime = Date.now()
@@ -366,15 +402,14 @@ export class Engine {
             let isLeaf = depth <= 0
             let turn = this.turn
 
-            let hashString = this.hashString() + depth
+            let hashString = this.hashString() + depth + "," + turn
             if (!rootCall && !isLeaf && transpositions.has(hashString))
                 return transpositions.get(hashString) as number
 
             let moves = this.allMoves()
 
             let valueSign = (this.turn === Color.White) ? 1 : -1
-            let mobilityScore = moves.length * 0.1 * valueSign
-
+            let optionsValue = this.optionsHeuristic(moves) * valueSign
 
             let best: number | null = null
             let bestValue = -Infinity * valueSign
@@ -382,13 +417,10 @@ export class Engine {
             for (let move of moves) {
                 let value = 0
                 this.doMove(move)
-                    if (isLeaf) {
-                        value = this.netMaterialValue + mobilityScore
-                        evaluations++
-                    } else {
-                        value = search(depth - 1, false, alpha, beta) as number
-                    }
-                    if (value * valueSign > bestValue * valueSign && !this.inCheck(turn)) {
+                    evaluations++
+                    value = isLeaf ? this.netMaterialValue + optionsValue : search(depth - 1, false, alpha, beta) as number
+                    let isImprovement = best === null  || value * valueSign > bestValue * valueSign
+                    if (isImprovement && !this.inCheck(turn)) {
                         best = move
                         bestValue = value
                         if (turn === Color.White)
@@ -413,9 +445,8 @@ export class Engine {
         let addCommas = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
         let dt = (Date.now() - startTime)
         this.totalSearchTime += dt
-        let _leaves = evaluations.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
         let evalsPerMs = (evaluations / dt).toString().split(".")[0]
-        console.log(`${addCommas(evaluations)} evals | ${addCommas(dt)} ms | ${addCommas(evalsPerMs)} leaves/ms | total search time: ${addCommas(this.totalSearchTime)} ms`)
+        console.log(`${addCommas(evaluations)} evals | ${addCommas(dt)} ms | ${addCommas(evalsPerMs)} evals/ms | total search time: ${addCommas(this.totalSearchTime)} ms`)
 
         return result
     }

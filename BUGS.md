@@ -1,0 +1,1 @@
+- Alphabeta refuses to finish game one move before checkmate. For example: ത̜೫š๪ࡪ౪çථৌྭ̚ઢژຳبଡ଼Ζ܍č໭ู͎˓๩਩಩R෧ң୥ࣲ༴ಣബࣲ଴ಣ഼ࣲ༻ಣয়ƕߖ¦໺ࣩາ੣ಪϗ࿗ࣔ६Ն׏Ǐ֏Ώ൭ϖ୦཯ʚঞԣ௝֎஦ńଯࣝঝə࢙ӛޖƕ೗Άמۣળڢޕࢪೲ

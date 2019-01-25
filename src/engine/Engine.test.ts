@@ -108,6 +108,17 @@ test("isSafe", t => {
     t.false(engine.isSafe(pos, Color.Black))
 })
 
+// Previously, alphabeta would ony accept moves which were an improvment when searching a node.
+// This made it impossible to pick a move ending in a checkmate in a doomed match.
+// Making alpha beta accept any move when it's best move is null fixed this.
+test("finishDoomedGame", t => {
+    let save = "ത̜೫š๪ࡪ౪çථৌྭ̚ઢژຳبଡ଼Ζ܍č໭ู͎˓๩਩಩R෧ң୥ࣲ༴ಣബࣲ଴ಣ഼ࣲ༻ಣয়ƕߖ¦໺ࣩາ੣ಪϗ࿗ࣔ६Ն׏Ǐ֏Ώ൭ϖ୦཯ʚঞԣ௝֎஦ńଯࣝঝə࢙ӛޖƕ೗Άמۣળڢޕࢪೲ"
+    let engine = new Engine().standardSetup()
+    engine.fromSaveString(save)
+    t.not(engine.alphabeta(3), null)
+    t.pass()
+})
+
 // test("moveGenPerformance", t => {
 //     let engine = new Game().standardSetup()
 //     let pos = Position.create(0, 2)

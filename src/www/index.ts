@@ -238,7 +238,7 @@ Context.bind(c => {
             iframe({
                 style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)",
                 width: 560, height: 315, src: "https://www.youtube.com/embed/0xKBsYVCdDk",
-                frameborder: "0",  allow:"accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture", allowfullscreen: true
+                frameborder: "0",  allow:"accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
             })
             end()
         }
