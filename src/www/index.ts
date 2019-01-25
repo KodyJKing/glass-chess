@@ -164,7 +164,7 @@ function board(c: Context) {
 
 Context.bind(c => {
     let { store, localize, text } = c
-    let { render, end, div, span, h1, button } = HtmlContext(c)
+    let { render, end, div, span, iframe, h1, button } = HtmlContext(c)
     let appState = store.get(AppState.key)
 
     let check = engine.inCheck()
@@ -172,67 +172,75 @@ Context.bind(c => {
 
     div({ class: "Game" })
         div({ style: "flex-grow: 1;" }); end()
-            div({ style: "margin: 16px;" })
-                div({ style: "padding-bottom: 8px;" })
-                h1("Glass Chess")
-                end()
-                render(board)
-                div({ style: "padding-top: 8px; display: flex" })
-                    if (!mate) {
-                        text(`Turn: ${Color[engine.turn]}${ check ? ", Check" : ""}`)
-                        // text(`Turn: ${Color[engine.turn]}, Net Material Value: ${engine.netMaterialValue}`)
-                    } else {
-                        text(check ? "Checkmate!" : "Stalemate!")
-                    }
-                    div({ style: "flex-grow: 1" }); end()
-                    div({ style: "padding: 2px; display: flex" });
-                        text("Debug")
-                        render(Checkbox, {
-                            id: "debug",
-                            value: appState.debug,
-                            onchange(this: HTMLInputElement) {
-                                store.patch(AppState.key, { debug: this.checked })
-                            }
-                        })
-                    end()
-                    button({
-                        disabled: appState.thinking,
-                        onclick() {
-                            engine.clear()
-                            engine.standardSetup()
-                            store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                        }
-                    })
-                        text("Reset")
-                    end()
-                    button({
-                        disabled: appState.thinking,
-                        onclick() {
-                            if (engine.history.length > 0)
-                                engine.undoMove()
-                            store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                        }
-                    })
-                        text("Undo")
-                    end()
-                    if (!mate) {
-                        button({
-                            disabled: appState.thinking,
-                            onclick() {
-                                store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
-                                setTimeout(() => {
-                                    let move = engine.alphabeta()
-                                    if (move !== null)
-                                        engine.doMove(move)
-                                    store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
-                                }, 0);
-                            }
-                        })
-                            text(appState.thinking ? "Thinking..." : "Think")
-                        end()
-                    }
-                end()
+        div({ style: "margin: 16px;" })
+            div({ style: "padding-bottom: 8px;" })
+            h1("Glass Chess")
             end()
+            render(board)
+            div({ style: "padding-top: 8px; display: flex" })
+                if (!mate) {
+                    text(`Turn: ${Color[engine.turn]}${ check ? ", Check" : ""}`)
+                    // text(`Turn: ${Color[engine.turn]}, Net Material Value: ${engine.netMaterialValue}`)
+                } else {
+                    text(check ? "Checkmate!" : "Stalemate!")
+                }
+                div({ style: "flex-grow: 1" }); end()
+                div({ style: "padding: 2px; display: flex" });
+                    text("Debug")
+                    render(Checkbox, {
+                        id: "debug",
+                        value: appState.debug,
+                        onchange(this: HTMLInputElement) {
+                            store.patch(AppState.key, { debug: this.checked })
+                        }
+                    })
+                end()
+                button({
+                    disabled: appState.thinking,
+                    onclick() {
+                        engine.clear()
+                        engine.standardSetup()
+                        store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                    }
+                })
+                    text("Reset")
+                end()
+                button({
+                    disabled: appState.thinking,
+                    onclick() {
+                        if (engine.history.length > 0)
+                            engine.undoMove()
+                        store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                    }
+                })
+                    text("Undo")
+                end()
+                if (!mate) {
+                    button({
+                        disabled: appState.thinking,
+                        onclick() {
+                            store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
+                            setTimeout(() => {
+                                let move = engine.alphabeta()
+                                if (move !== null)
+                                    engine.doMove(move)
+                                store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
+                            }, 0);
+                        }
+                    })
+                        text(appState.thinking ? "Thinking..." : "Think")
+                    end()
+                }
+            end()
+        end()
         div({ style: "flex-grow: 1;" }); end()
+        if (check && mate && engine.history.length < 5) {
+            iframe({
+                style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)",
+                width: 560, height: 315, src: "https://www.youtube.com/embed/0xKBsYVCdDk",
+                frameborder: "0",  allow:"accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture", allowfullscreen: true
+            })
+            end()
+        }
     end()
 })
