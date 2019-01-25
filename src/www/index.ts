@@ -93,6 +93,9 @@ class AppState extends State {
     @Model.property({ type: "boolean", default: false })
     debug!: boolean
 
+    @Model.property({ type: "boolean", default: false })
+    thinking!: boolean
+
     static readonly store = "memory"
     static key = Key.create(AppState, "0")
 }
@@ -193,6 +196,7 @@ Context.bind(c => {
                         })
                     end()
                     button({
+                        disabled: appState.thinking,
                         onclick() {
                             engine.clear()
                             engine.standardSetup()
@@ -202,6 +206,7 @@ Context.bind(c => {
                         text("Reset")
                     end()
                     button({
+                        disabled: appState.thinking,
                         onclick() {
                             if (engine.history.length > 0)
                                 engine.undoMove()
@@ -212,14 +217,18 @@ Context.bind(c => {
                     end()
                     if (!mate) {
                         button({
+                            disabled: appState.thinking,
                             onclick() {
-                                let move = engine.alphabeta(5)
-                                if (move !== null)
-                                    engine.doMove(move)
-                                store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                                store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
+                                setTimeout(() => {
+                                    let move = engine.alphabeta()
+                                    if (move !== null)
+                                        engine.doMove(move)
+                                    store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
+                                }, 0);
                             }
                         })
-                            text("Think")
+                            text(appState.thinking ? "Thinking..." : "Think")
                         end()
                     }
                 end()
