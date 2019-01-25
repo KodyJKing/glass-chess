@@ -332,9 +332,9 @@ export class Engine {
         return moves
     }
 
-    inCheck() {
-        let pos = this.kingPos(this.turn)
-        return (pos === null) ? false : !this.isSafe(pos, this.turn)
+    inCheck(turn = this.turn) {
+        let pos = this.kingPos(turn)
+        return (pos === null) ? false : !this.isSafe(pos, turn)
     }
 
     inMate() {
@@ -343,74 +343,66 @@ export class Engine {
 
     // AI
 
-    hashString(depth = 0) {
+    hashString() {
         let parts = new Array(24)
-        // let parts = new Array(65)
         let i = 0
-        for (let y = 0; y < 8; y++) {
-            // for (let x = 0; x < 8; x++)
-            //     parts[i++] = String.fromCharCode(this.pieces[Pos(x, y)])
-            for (let x = 0; x < 8; x += 3) {
+        for (let y = 0; y < 8; y++)
+            for (let x = 0; x < 8; x += 3)
                 parts[i++] = String.fromCharCode(
                     (this.pieces[Pos(x, y)] << 10) |
                     (this.pieces[Pos(x + 1, y)] << 5) |
                     (this.pieces[Pos(x + 2, y)] || 0)
                 )
-            }
-        }
-        parts[i++] = depth
         return parts.join("")
     }
 
-    alphabeta(depth) {
-        const DO_TRANSPOSITIONS = false
-
+    totalSearchTime = 0
+    alphabeta(depth = 5) {
         let startTime = Date.now()
-        let leaves = 0
+        let evaluations = 0
         let transpositions = new Map<string, number>()
 
         let search = (depth = 0, rootCall = true, alpha = -Infinity, beta = Infinity) => {
-            let hashString = DO_TRANSPOSITIONS ? this.hashString(depth) : ""
-            if (!rootCall && DO_TRANSPOSITIONS && transpositions.has(hashString))
+            let isLeaf = depth <= 0
+            let turn = this.turn
+
+            let hashString = this.hashString() + depth
+            if (!rootCall && !isLeaf && transpositions.has(hashString))
                 return transpositions.get(hashString) as number
 
-            let isLeaf = depth === 0
             let moves = this.allMoves()
 
             let valueSign = (this.turn === Color.White) ? 1 : -1
-            let mobilityScore = moves.length * 0.5 * valueSign
+            let mobilityScore = moves.length * 0.1 * valueSign
+
 
             let best: number | null = null
             let bestValue = -Infinity * valueSign
+            let alphaBetaCutoff = false
             for (let move of moves) {
-
                 let value = 0
-
-                let captured = Move.get.captured(move)
-                if (Piece.get.type(captured) === Type.King){
-                    value = Infinity * valueSign
-                } else {
-                    this.doMove(move)
-                    value = isLeaf ? (this.netMaterialValue + mobilityScore) : (search(depth - 1, false, alpha, beta) as number)
-                    if (isLeaf)
-                        leaves++
-                    this.undoMove()
-                }
-
-                if (value * valueSign > bestValue * valueSign) {
-                    best = move
-                    bestValue = value
-                    if (this.turn === Color.White)
-                        alpha = Math.max(alpha, bestValue)
-                    else
-                        beta = Math.min(beta, bestValue)
-                    if (alpha >= beta)
-                        break // The opponent will never allow this.
-                }
-
+                this.doMove(move)
+                    if (isLeaf) {
+                        value = this.netMaterialValue + mobilityScore
+                        evaluations++
+                    } else {
+                        value = search(depth - 1, false, alpha, beta) as number
+                    }
+                    if (value * valueSign > bestValue * valueSign && !this.inCheck(turn)) {
+                        best = move
+                        bestValue = value
+                        if (turn === Color.White)
+                            alpha = Math.max(alpha, bestValue)
+                        else
+                            beta = Math.min(beta, bestValue)
+                        alphaBetaCutoff = (alpha >= beta)
+                    }
+                this.undoMove()
+                if (alphaBetaCutoff)
+                    break
             }
 
-            if (DO_TRANSPOSITIONS && isLeaf)
+            if (!isLeaf)
                 transpositions.set(hashString, bestValue)
 
             return rootCall ? best : bestValue
@@ -418,10 +410,12 @@ export class Engine {
 
         let result = search(depth)
 
+        let addCommas = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
         let dt = (Date.now() - startTime)
-        let _leaves = leaves.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-        let leavesPerMs = (leaves / dt).toString().split(".")[0]
-        console.log(`${_leaves} leaves, ${dt} ms, ${leavesPerMs} leaves/ms.`)
+        this.totalSearchTime += dt
+        let _leaves = evaluations.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        let evalsPerMs = (evaluations / dt).toString().split(".")[0]
+        console.log(`${addCommas(evaluations)} evals | ${addCommas(dt)} ms | ${addCommas(evalsPerMs)} leaves/ms | total search time: ${addCommas(this.totalSearchTime)} ms`)
 
         return result
     }
