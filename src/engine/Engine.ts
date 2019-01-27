@@ -373,23 +373,36 @@ export class Engine {
         return parts.join("")
     }
 
-
-    optionsHeuristic(moves: number[]) {
+    heuristic(depth) {
+        if (depth === 0)
+            return this.netMaterialValue
+        else if (depth > 1)
+            return 0
         let control = 0
         let attacks = 0
-        for (let move of moves) {
-            let to = Move.get.to(move)
-            let x = Position.get.x(to)
-            let y = Position.get.y(to)
-            let xBonus = 3.5 - Math.abs(x - 3.5)
-            let yBonus = 3.5 - Math.abs(y - 3.5)
-            control += 1 + xBonus + yBonus
+        for (let x = 0; x < 8; x++) {
+            for (let y = 0; y < 8; y++) {
+                let pos = Pos(x, y)
+                let piece = this.pieces[pos]
+                let type = Piece.get.type(piece)
+                if (type === Type.Empty)
+                    continue
+                let valueSign = Piece.get.color(piece) === Color.White ? 1 : -1
+                for (let move of this.generateMovesAt(pos)) {
+                    let to = Move.get.to(move)
+                    let x = Position.get.x(to)
+                    let y = Position.get.y(to)
+                    let xBonus = 3.5 - Math.abs(x - 3.5)
+                    let yBonus = 3.5 - Math.abs(y - 3.5)
+                    control += (1 + xBonus + yBonus) * valueSign
 
-            let capturedType = Piece.get.type(Move.get.captured(move))
-            if (capturedType !== Type.Empty)
-                attacks++
+                    let capturedType = Piece.get.type(Move.get.captured(move))
+                    if (capturedType !== Type.Empty)
+                        attacks += valueSign
+                }
+            }
         }
-        return (control + attacks) * 0.1
+        return this.netMaterialValue + (control + attacks) * 0.1
     }
 
     totalSearchTime = 0
@@ -401,24 +414,35 @@ export class Engine {
         let search = (depth = 0, rootCall = true, alpha = -Infinity, beta = Infinity) => {
             let isLeaf = depth <= 0
             let turn = this.turn
+            let valueSign = (this.turn === Color.White) ? 1 : -1
 
             let hashString = this.hashString() + depth + "," + turn
+            let prevHashString = this.hashString() + (depth - 1) + "," + turn
             if (!rootCall && !isLeaf && transpositions.has(hashString))
                 return transpositions.get(hashString) as number
 
             let moves = this.allMoves()
 
-            let valueSign = (this.turn === Color.White) ? 1 : -1
-            let optionsValue = this.optionsHeuristic(moves) * valueSign
+            let pairs = moves.map((move) => {
+                this.doMove(move)
+                // let value = transpositions.get(prevHashString) || this.heuristic()
+                let value = this.heuristic(0)
+                this.undoMove()
+                return [move, value]
+            })
+            pairs.sort((a,b) => ((b[1] - a[1]) * valueSign))
 
             let best: number | null = null
             let bestValue = -Infinity * valueSign
             let alphaBetaCutoff = false
-            for (let move of moves) {
+            for (let [move, heuristic] of pairs) {
                 let value = 0
                 this.doMove(move)
                     evaluations++
-                    value = isLeaf ? this.netMaterialValue + optionsValue : search(depth - 1, false, alpha, beta) as number
+                    value = this.heuristic(depth)
+                    if (!isLeaf)
+                        value += search(depth - 1, false, alpha, beta) as number
+                    // value = isLeaf ? heuristic : search(depth - 1, false, alpha, beta) as number
                     let isImprovement = best === null  || value * valueSign > bestValue * valueSign
                     if (isImprovement && !this.inCheck(turn)) {
                         best = move
@@ -440,7 +464,10 @@ export class Engine {
             return rootCall ? best : bestValue
         }
 
-        let result = search(depth)
+        // let result = search(depth)
+        let result
+        for (let i = 0; i <= depth; i++)
+            result = search(i)
 
         let addCommas = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
         let dt = (Date.now() - startTime)
