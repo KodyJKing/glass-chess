@@ -442,7 +442,6 @@ export class Engine {
                     value = this.heuristic(depth)
                     if (!isLeaf)
                         value += search(depth - 1, false, alpha, beta) as number
-                    // value = isLeaf ? heuristic : search(depth - 1, false, alpha, beta) as number
                     let isImprovement = best === null  || value * valueSign > bestValue * valueSign
                     if (isImprovement && !this.inCheck(turn)) {
                         best = move
@@ -464,7 +463,6 @@ export class Engine {
             return rootCall ? best : bestValue
         }
 
-        // let result = search(depth)
         let result
         for (let i = 0; i <= depth; i++)
             result = search(i)

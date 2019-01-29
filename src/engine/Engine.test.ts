@@ -115,7 +115,7 @@ test("finishDoomedGame", t => {
     let save = "ത̜೫š๪ࡪ౪çථৌྭ̚ઢژຳبଡ଼Ζ܍č໭ู͎˓๩਩಩R෧ң୥ࣲ༴ಣബࣲ଴ಣ഼ࣲ༻ಣয়ƕߖ¦໺ࣩາ੣ಪϗ࿗ࣔ६Ն׏Ǐ֏Ώ൭ϖ୦཯ʚঞԣ௝֎஦ńଯࣝঝə࢙ӛޖƕ೗Άמۣળڢޕࢪೲ"
     let engine = new Engine().standardSetup()
     engine.fromSaveString(save)
-    t.not(engine.alphabeta(5), null)
+    t.not(engine.alphabeta(), null)
     t.pass()
 })
 
