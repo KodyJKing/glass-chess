@@ -202,9 +202,7 @@ Context.bind(c => {
                         engine.standardSetup()
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
                     }
-                })
-                    text("Reset")
-                end()
+                }, "Reset")
                 button({
                     disabled: appState.thinking,
                     onclick() {
@@ -212,9 +210,7 @@ Context.bind(c => {
                             engine.undoMove()
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
                     }
-                })
-                    text("Undo")
-                end()
+                }, "Undo")
                 if (!mate) {
                     button({
                         disabled: appState.thinking,
@@ -227,10 +223,13 @@ Context.bind(c => {
                                 store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
                             }, 0);
                         }
-                    })
-                        text(appState.thinking ? "Thinking..." : "Think")
-                    end()
+                    }, appState.thinking ? "Thinking..." : "Think")
                 }
+                // button({
+                //     onclick() {
+                //         console.log("Foo")
+                //     }
+                // }, "Test")
             end()
         end()
         div({ style: "flex-grow: 1;" }); end()

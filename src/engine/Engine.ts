@@ -379,7 +379,8 @@ export class Engine {
         else if (depth > 1)
             return 0
         let control = 0
-        let attacks = 0
+        let threat = 0
+        let threateningPieces = 0
         for (let x = 0; x < 8; x++) {
             for (let y = 0; y < 8; y++) {
                 let pos = Pos(x, y)
@@ -388,6 +389,7 @@ export class Engine {
                 if (type === Type.Empty)
                     continue
                 let valueSign = Piece.get.color(piece) === Color.White ? 1 : -1
+                let threatening = false
                 for (let move of this.generateMovesAt(pos)) {
                     let to = Move.get.to(move)
                     let x = Position.get.x(to)
@@ -397,19 +399,24 @@ export class Engine {
                     control += (1 + xBonus + yBonus) * valueSign
 
                     let capturedType = Piece.get.type(Move.get.captured(move))
-                    if (capturedType !== Type.Empty)
-                        attacks += valueSign
+                    if (capturedType !== Type.Empty) {
+                        threatening = true
+                        let value = capturedType == Type.King ? 10 : pieceValues[capturedType]
+                        threat += valueSign * value
+                    }
                 }
+                if (threatening)
+                    threateningPieces += valueSign
             }
         }
-        return this.netMaterialValue + (control + attacks) * 0.1
+        return this.netMaterialValue + (control + threat + threateningPieces) * 0.1
     }
 
     totalSearchTime = 0
-    alphabeta(depth = 5) {
+    alphabeta(depth = 5, maxSearchMilis = 15000) {
         let startTime = Date.now()
         let evaluations = 0
-        let transpositions = new Map<string, number>()
+        let cache = new Map<string, number>()
 
         let search = (depth = 0, rootCall = true, alpha = -Infinity, beta = Infinity) => {
             let isLeaf = depth <= 0
@@ -417,15 +424,11 @@ export class Engine {
             let valueSign = (this.turn === Color.White) ? 1 : -1
 
             let hashString = this.hashString() + depth + "," + turn
-            let prevHashString = this.hashString() + (depth - 1) + "," + turn
-            if (!rootCall && !isLeaf && transpositions.has(hashString))
-                return transpositions.get(hashString) as number
+            if (!rootCall && !isLeaf && cache.has(hashString))
+                return cache.get(hashString) as number
 
-            let moves = this.allMoves()
-
-            let pairs = moves.map((move) => {
+            let pairs = this.allMoves().map((move) => {
                 this.doMove(move)
-                // let value = transpositions.get(prevHashString) || this.heuristic()
                 let value = this.heuristic(0)
                 this.undoMove()
                 return [move, value]
@@ -458,17 +461,24 @@ export class Engine {
             }
 
             if (!isLeaf)
-                transpositions.set(hashString, bestValue)
+                cache.set(hashString, bestValue)
 
             return rootCall ? best : bestValue
         }
 
-        let result
-        for (let i = 0; i <= depth; i++)
-            result = search(i)
+        // let result
+        // let dt
+        // for (let i = 0; i <= depth; i++) {
+        //     result = search(i)
+        //     dt = (Date.now() - startTime)
+        //     if (dt >= maxSearchMilis)
+        //         break
+        // }
+
+        let result = search(depth)
+        let dt = (Date.now() - startTime)
 
         let addCommas = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-        let dt = (Date.now() - startTime)
         this.totalSearchTime += dt
         let evalsPerMs = (evaluations / dt).toString().split(".")[0]
         console.log(`${addCommas(evaluations)} evals | ${addCommas(dt)} ms | ${addCommas(evalsPerMs)} evals/ms | total search time: ${addCommas(this.totalSearchTime)} ms`)
