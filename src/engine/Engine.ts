@@ -378,9 +378,18 @@ export class Engine {
             return this.netMaterialValue
         else if (depth > 1)
             return 0
+
         let control = 0
         let threat = 0
         let threateningPieces = 0
+        let development = 0
+
+        const edgeDistance = (pos) => {
+            let xDist = 3.5 - Math.abs(Position.get.x(pos) - 3.5)
+            let yDist = 3.5 - Math.abs(Position.get.y(pos) - 3.5)
+            return xDist + yDist
+        }
+
         for (let x = 0; x < 8; x++) {
             for (let y = 0; y < 8; y++) {
                 let pos = Pos(x, y)
@@ -388,20 +397,21 @@ export class Engine {
                 let type = Piece.get.type(piece)
                 if (type === Type.Empty)
                     continue
+
+                let invPieceValue = 1 / pieceValues[type]
                 let valueSign = Piece.get.color(piece) === Color.White ? 1 : -1
+
+                development += edgeDistance(pos) * valueSign * invPieceValue
+
                 let threatening = false
                 for (let move of this.generateMovesAt(pos)) {
                     let to = Move.get.to(move)
-                    let x = Position.get.x(to)
-                    let y = Position.get.y(to)
-                    let xBonus = 3.5 - Math.abs(x - 3.5)
-                    let yBonus = 3.5 - Math.abs(y - 3.5)
-                    control += (1 + xBonus + yBonus) * valueSign
+                    control += (1 + edgeDistance(to)) * valueSign * invPieceValue
 
                     let capturedType = Piece.get.type(Move.get.captured(move))
                     if (capturedType !== Type.Empty) {
                         threatening = true
-                        let value = capturedType == Type.King ? 10 : pieceValues[capturedType]
+                        let value = capturedType == Type.King ? 10 : pieceValues[capturedType] * invPieceValue
                         threat += valueSign * value
                     }
                 }
@@ -409,14 +419,16 @@ export class Engine {
                     threateningPieces += valueSign
             }
         }
-        return this.netMaterialValue + (control + threat + threateningPieces) * 0.1
+        return this.netMaterialValue + (control + threat + threateningPieces + development) * 0.1
     }
 
     totalSearchTime = 0
-    alphabeta(depth = 5, maxSearchMilis = 15000) {
+    alphabeta(depth = 6) {
         let startTime = Date.now()
         let evaluations = 0
         let cache = new Map<string, number>()
+
+        let startingDepth = depth
 
         let search = (depth = 0, rootCall = true, alpha = -Infinity, beta = Infinity) => {
             let isLeaf = depth <= 0
@@ -429,7 +441,10 @@ export class Engine {
 
             let pairs = this.allMoves().map((move) => {
                 this.doMove(move)
-                let value = this.heuristic(0)
+                let invDepth = startingDepth - depth
+                let value = this.heuristic(invDepth < 4 ? 1 : 0)
+                // let value = this.heuristic(1)
+                // let value = this.heuristic(0)
                 this.undoMove()
                 return [move, value]
             })
@@ -438,7 +453,7 @@ export class Engine {
             let best: number | null = null
             let bestValue = -Infinity * valueSign
             let alphaBetaCutoff = false
-            for (let [move, heuristic] of pairs) {
+            for (let [move] of pairs) {
                 let value = 0
                 this.doMove(move)
                     evaluations++
@@ -465,15 +480,6 @@ export class Engine {
 
             return rootCall ? best : bestValue
         }
-
-        // let result
-        // let dt
-        // for (let i = 0; i <= depth; i++) {
-        //     result = search(i)
-        //     dt = (Date.now() - startTime)
-        //     if (dt >= maxSearchMilis)
-        //         break
-        // }
 
         let result = search(depth)
         let dt = (Date.now() - startTime)
