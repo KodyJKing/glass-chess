@@ -185,22 +185,24 @@ Context.bind(c => {
                     text(check ? "Checkmate!" : "Stalemate!")
                 }
                 div({ style: "flex-grow: 1" }); end()
-                div({ style: "padding: 2px; display: flex" });
-                    text("Debug")
-                    render(Checkbox, {
-                        id: "debug",
-                        value: appState.debug,
-                        onchange(this: HTMLInputElement) {
-                            store.patch(AppState.key, { debug: this.checked })
-                        }
-                    })
-                end()
+                // div({ style: "padding: 2px; display: flex" });
+                //     text("Debug")
+                //     render(Checkbox, {
+                //         id: "debug",
+                //         value: appState.debug,
+                //         onchange(this: HTMLInputElement) {
+                //             store.patch(AppState.key, { debug: this.checked })
+                //         }
+                //     })
+                // end()
                 button({
                     disabled: appState.thinking,
                     onclick() {
-                        engine.clear()
-                        engine.standardSetup()
-                        store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                        if (confirm("Reset game?")) {
+                            engine.clear()
+                            engine.standardSetup()
+                            store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                        }
                     }
                 }, "Reset")
                 button({
@@ -225,11 +227,6 @@ Context.bind(c => {
                         }
                     }, appState.thinking ? "Thinking..." : "Think")
                 }
-                // button({
-                //     onclick() {
-                //         console.log("Foo")
-                //     }
-                // }, "Test")
             end()
         end()
         div({ style: "flex-grow: 1;" }); end()

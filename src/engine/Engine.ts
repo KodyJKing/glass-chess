@@ -109,7 +109,7 @@ export class Engine {
 
     // Move Generation
 
-    slide(from: number, dx: number, dy: number, max: number, color: Color, captures: Ternary, moves: number[]): number {
+    slide(from: number, dx: number, dy: number, max: number, color: Color, selfCaptures: boolean, captures: Ternary, moves: number[]): number {
         let count = 0
         let x = posX(from)
         let y = posY(from)
@@ -135,51 +135,51 @@ export class Engine {
         return count
     }
 
-    slideCardinals(pos: number, max: number, color: Color, captures: Ternary, moves: number[]) {
-        this.slide(pos, 1, 0, max, color, captures, moves)
-        this.slide(pos, -1, 0, max, color, captures, moves)
-        this.slide(pos, 0, -1, max, color, captures, moves)
-        this.slide(pos, 0, 1, max, color, captures, moves)
+    slideCardinals(pos: number, max: number, color: Color, selfCaptures: boolean, captures: Ternary, moves: number[]) {
+        this.slide(pos, 1, 0, max, color, selfCaptures, captures, moves)
+        this.slide(pos, -1, 0, max, color, selfCaptures, captures, moves)
+        this.slide(pos, 0, -1, max, color, selfCaptures, captures, moves)
+        this.slide(pos, 0, 1, max, color, selfCaptures, captures, moves)
     }
 
-    slideDiagonals(pos: number, max: number, color: Color, captures: Ternary, moves: number[]) {
-        this.slide(pos, 1, 1, max, color, captures, moves)
-        this.slide(pos, -1, 1, max, color, captures, moves)
-        this.slide(pos, 1, -1, max, color, captures, moves)
-        this.slide(pos, -1, -1, max, color, captures, moves)
+    slideDiagonals(pos: number, max: number, color: Color, selfCaptures: boolean, captures: Ternary, moves: number[]) {
+        this.slide(pos, 1, 1, max, color, selfCaptures, captures, moves)
+        this.slide(pos, -1, 1, max, color, selfCaptures, captures, moves)
+        this.slide(pos, 1, -1, max, color, selfCaptures, captures, moves)
+        this.slide(pos, -1, -1, max, color, selfCaptures, captures, moves)
     }
 
-    generateMoves(pos: number, type: Type, color: Color, moved: number, captures: Ternary): number[] {
+    generateMoves(pos: number, type: Type, color: Color, moved: number, selfCaptures: boolean, captures: Ternary): number[] {
         let moves: number[] = []
         switch (type) {
             case Type.Pawn: {
                 let dy = color == Color.White ? -1: 1
-                this.slide(pos, 0, dy, moved ? 1 : 2, color, Ternary.never, moves)
-                this.slide(pos, -1, dy, 1, color, Ternary.always, moves)
-                this.slide(pos, 1, dy, 1, color, Ternary.always, moves)
+                this.slide(pos, 0, dy, moved ? 1 : 2, color, selfCaptures, Ternary.never, moves)
+                this.slide(pos, -1, dy, 1, color, selfCaptures, Ternary.always, moves)
+                this.slide(pos, 1, dy, 1, color, selfCaptures, Ternary.always, moves)
                 break
             }
             case Type.Knight: {
                 // QI, +x, +y
-                this.slide(pos, 2, 1, 1, color, captures, moves)
-                this.slide(pos, 1, 2, 1, color, captures, moves)
+                this.slide(pos, 2, 1, 1, color, selfCaptures, captures, moves)
+                this.slide(pos, 1, 2, 1, color, selfCaptures, captures, moves)
                 // QII, -x, +y
-                this.slide(pos, -2, 1, 1, color, captures, moves)
-                this.slide(pos, -1, 2, 1, color, captures, moves)
+                this.slide(pos, -2, 1, 1, color, selfCaptures, captures, moves)
+                this.slide(pos, -1, 2, 1, color, selfCaptures, captures, moves)
                 // QIII, -x, -y
-                this.slide(pos, -2, -1, 1, color, captures, moves)
-                this.slide(pos, -1, -2, 1, color, captures, moves)
+                this.slide(pos, -2, -1, 1, color, selfCaptures, captures, moves)
+                this.slide(pos, -1, -2, 1, color, selfCaptures, captures, moves)
                 // QIV, +x, -y
-                this.slide(pos, 2, -1, 1, color, captures, moves)
-                this.slide(pos, 1, -2, 1, color, captures, moves)
+                this.slide(pos, 2, -1, 1, color, selfCaptures, captures, moves)
+                this.slide(pos, 1, -2, 1, color, selfCaptures, captures, moves)
                 break
             }
-            case Type.Bishop: { this.slideDiagonals(pos, 7, color, captures, moves); break }
-            case Type.Rook: { this.slideCardinals(pos, 7, color, captures, moves); break }
-            case Type.Queen: { this.slideDiagonals(pos, 7, color, captures, moves); this.slideCardinals(pos, 7, color, captures, moves); break }
+            case Type.Bishop: { this.slideDiagonals(pos, 7, color, selfCaptures, captures, moves); break }
+            case Type.Rook: { this.slideCardinals(pos, 7, color, selfCaptures, captures, moves); break }
+            case Type.Queen: { this.slideDiagonals(pos, 7, color, selfCaptures, captures, moves); this.slideCardinals(pos, 7, color, selfCaptures, captures, moves); break }
             case Type.King: {
-                this.slideDiagonals(pos, 1, color, captures, moves)
-                this.slideCardinals(pos, 1, color, captures, moves)
+                this.slideDiagonals(pos, 1, color, selfCaptures, captures, moves)
+                this.slideCardinals(pos, 1, color, selfCaptures, captures, moves)
                 if (!moved) {
                     if (this.canCastle(pos, color, -1))
                         moves.push(Move.create(Pos(2, posY(pos)), pos, 0, 1))
@@ -278,9 +278,9 @@ export class Engine {
             this.tryCastle(to, from, true)
     }
 
-    generateMovesAt(pos: number) {
+    generateMovesAt(pos: number, selfCaptures = false) {
         let piece = this.pieces[pos]
-        let moves = this.generateMoves(pos, Piece.get.type(piece), Piece.get.color(piece), Piece.get.moved(piece), Ternary.either)
+        let moves = this.generateMoves(pos, Piece.get.type(piece), Piece.get.color(piece), Piece.get.moved(piece), selfCaptures, Ternary.either)
         if (!Piece.get.moved(piece))
             for (let i = 0; i < moves.length; i++)
                 moves[i] = Move.set.firstMove(moves[i], 1)
@@ -323,7 +323,7 @@ export class Engine {
     // If we can 'capture' them, they can capture us.
     isSafe(pos: number, color: Color) {
         for (let type = Type.Pawn; type <= Type.King; type++) {
-            let moves = this.generateMoves(pos, type, color, 1, Ternary.always)
+            let moves = this.generateMoves(pos, type, color, 1, false, Ternary.always)
             for (let move of moves) {
                 let piece = this.pieces[Move.get.to(move)]
                 if (Piece.get.type(piece) === type)
@@ -376,13 +376,14 @@ export class Engine {
     heuristic(depth) {
         if (depth === 0)
             return this.netMaterialValue
-        else if (depth > 1)
+        if (depth > 1)
             return 0
 
         let control = 0
         let threat = 0
         let threateningPieces = 0
         let development = 0
+        let support = 0
 
         const edgeDistance = (pos) => {
             let xDist = 3.5 - Math.abs(Position.get.x(pos) - 3.5)
@@ -399,52 +400,55 @@ export class Engine {
                     continue
 
                 let invPieceValue = 1 / pieceValues[type]
-                let valueSign = Piece.get.color(piece) === Color.White ? 1 : -1
+                let color = Piece.get.color(piece)
+                let valueSign = color === Color.White ? 1 : -1
 
                 development += edgeDistance(pos) * valueSign * invPieceValue
 
                 let threatening = false
-                for (let move of this.generateMovesAt(pos)) {
-                    let to = Move.get.to(move)
-                    control += (1 + edgeDistance(to)) * valueSign * invPieceValue
-
+                for (let move of this.generateMovesAt(pos, true)) {
                     let capturedType = Piece.get.type(Move.get.captured(move))
-                    if (capturedType !== Type.Empty) {
-                        threatening = true
-                        let value = capturedType == Type.King ? 10 : pieceValues[capturedType] * invPieceValue
-                        threat += valueSign * value
+                    let capturedColor = Piece.get.color(Move.get.captured(move))
+                    let captured = capturedType !== Type.Empty
+                    if (captured && capturedColor == color) {
+                        support += valueSign * invPieceValue / pieceValues[capturedType]
+                    } else {
+                        let to = Move.get.to(move)
+                        control += (1 + edgeDistance(to)) * valueSign * invPieceValue
+                        if (captured) {
+                            threatening = true
+                            let value = capturedType == Type.King ? 10 : pieceValues[capturedType] * invPieceValue
+                            threat += valueSign * value
+                        }
                     }
                 }
                 if (threatening)
                     threateningPieces += valueSign
             }
         }
-        return this.netMaterialValue + (control + threat + threateningPieces + development) * 0.1
+        return this.netMaterialValue + (control + threat + threateningPieces + development + support) * 0.1
     }
 
     totalSearchTime = 0
-    alphabeta(depth = 6) {
+    alphabeta(depth = 5) {
         let startTime = Date.now()
         let evaluations = 0
         let cache = new Map<string, number>()
-
-        let startingDepth = depth
 
         let search = (depth = 0, rootCall = true, alpha = -Infinity, beta = Infinity) => {
             let isLeaf = depth <= 0
             let turn = this.turn
             let valueSign = (this.turn === Color.White) ? 1 : -1
 
-            let hashString = this.hashString() + depth + "," + turn
+            let baseHashString = this.hashString()
+            let hashString = baseHashString + depth + "," + turn
+            // let prevHashString = baseHashString + (depth - 1) + "," + turn
             if (!rootCall && !isLeaf && cache.has(hashString))
                 return cache.get(hashString) as number
 
             let pairs = this.allMoves().map((move) => {
                 this.doMove(move)
-                let invDepth = startingDepth - depth
-                let value = this.heuristic(invDepth < 4 ? 1 : 0)
-                // let value = this.heuristic(1)
-                // let value = this.heuristic(0)
+                let value = this.heuristic(isLeaf ? 0 : 1)
                 this.undoMove()
                 return [move, value]
             })
@@ -482,6 +486,12 @@ export class Engine {
         }
 
         let result = search(depth)
+        // let result
+        // for (let i = 1; i <= depth; i++) {
+        //     result = search(i)
+        //     console.log(i)
+        // }
+
         let dt = (Date.now() - startTime)
 
         let addCommas = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
