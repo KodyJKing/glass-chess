@@ -373,9 +373,9 @@ export class Engine {
         return parts.join("")
     }
 
-    heuristic(depth) {
+    heuristic(depth, options) {
         if (depth === 0)
-            return this.netMaterialValue
+            return this.netMaterialValue * options.materialBias
         if (depth > 1)
             return 0
 
@@ -414,7 +414,8 @@ export class Engine {
                         support += valueSign * invPieceValue / pieceValues[capturedType]
                     } else {
                         let to = Move.get.to(move)
-                        control += (1 + edgeDistance(to)) * valueSign * invPieceValue
+                        control += (1 + edgeDistance(to) * invPieceValue) * valueSign
+                        // control += (1 + edgeDistance(to)) * valueSign * invPieceValue
                         if (captured) {
                             threatening = true
                             let value = capturedType == Type.King ? 10 : pieceValues[capturedType] * invPieceValue
@@ -426,11 +427,11 @@ export class Engine {
                     threateningPieces += valueSign
             }
         }
-        return this.netMaterialValue + (control + threat + threateningPieces + development + support) * 0.1
+        return this.netMaterialValue * options.materialBias + (control + threat + threateningPieces + development + support)
     }
 
     totalSearchTime = 0
-    alphabeta(depth = 5) {
+    alphabeta(depth = 5, options = { materialBias: 10 }) {
         let startTime = Date.now()
         let evaluations = 0
         let cache = new Map<string, number>()
@@ -448,7 +449,7 @@ export class Engine {
 
             let pairs = this.allMoves().map((move) => {
                 this.doMove(move)
-                let value = this.heuristic(isLeaf ? 0 : 1)
+                let value = this.heuristic(isLeaf ? 0 : 1, options)
                 this.undoMove()
                 return [move, value]
             })
@@ -461,7 +462,7 @@ export class Engine {
                 let value = 0
                 this.doMove(move)
                     evaluations++
-                    value = this.heuristic(depth)
+                    value = this.heuristic(depth, options)
                     if (!isLeaf)
                         value += search(depth - 1, false, alpha, beta) as number
                     let isImprovement = best === null  || value * valueSign > bestValue * valueSign

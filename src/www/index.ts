@@ -214,23 +214,29 @@ Context.bind(c => {
                     }
                 }, "Undo")
                 if (!mate) {
+                    const think = () => {
+                        store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
+                        setTimeout(() => {
+                            // let move = engine.alphabeta(6, { materialBias: engine.turn == Color.White ? 20 : 10 })
+                            let move = engine.alphabeta()
+                            if (move !== null)
+                                engine.doMove(move)
+                            store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
+                            // if (move != null)
+                            //     think()
+                        }, 0);
+                    }
                     button({
                         disabled: appState.thinking,
                         onclick() {
-                            store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
-                            setTimeout(() => {
-                                let move = engine.alphabeta()
-                                if (move !== null)
-                                    engine.doMove(move)
-                                store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
-                            }, 0);
+                            think()
                         }
                     }, appState.thinking ? "Thinking..." : "Think")
                 }
             end()
         end()
         div({ style: "flex-grow: 1;" }); end()
-        if (check && mate && engine.history.length < 5) {
+        if (check && mate && engine.history.length <= 10) {
             iframe({
                 style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)",
                 width: 560, height: 315, src: "https://www.youtube.com/embed/0xKBsYVCdDk",
