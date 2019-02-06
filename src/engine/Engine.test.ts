@@ -8,8 +8,8 @@ import { Color } from "./Color";
 function compareBoards(a: string, b: string) {
     let format = (x) => (
         x.split("\n")
-        .filter( (x) => x.length > 0 )
         .map( (x) => x.trim() )
+        .filter( (x) => x.length > 0 )
     ).join("\n")
     return format(a) === format(b)
 }
