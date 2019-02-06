@@ -1,5 +1,5 @@
-import struct from "./struct";
-export default struct([
+import bitfield from "./bitfield";
+export default bitfield([
     ["to", 6],
     ["from", 6],
     ["captured", 5],

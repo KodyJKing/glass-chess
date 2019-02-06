@@ -1,8 +1,8 @@
-import struct from "./struct";
+import bitfield from "./bitfield";
 import { Type } from "./Type";
 import { Color } from "./Color";
 import { Bool } from "./Bool";
-let s = struct([
+let s = bitfield([
     ["type", 3],
     ["color", 1],
     ["moved", 1]
@@ -10,16 +10,16 @@ let s = struct([
 type PieceObject = { type: Type, color: Color, moved: Bool }
 export default s as {
     get: {
-        type(struct: number): Type,
-        color(struct: number): Color,
-        moved(struct: number): Bool
+        type(bitfield: number): Type,
+        color(bitfield: number): Color,
+        moved(bitfield: number): Bool
     },
     set: {
-        type(struct: number, value: Type): number
-        color(struct: number, value: Color): number,
-        moved(struct: number, value: Bool): number,
+        type(bitfield: number, value: Type): number
+        color(bitfield: number, value: Color): number,
+        moved(bitfield: number, value: Bool): number,
     }
     create(type: Type, color: Color, moved: Bool): number,
-    toObject(struct: number): PieceObject,
+    toObject(bitfield: number): PieceObject,
     fromObject(object: PieceObject): number
 }
