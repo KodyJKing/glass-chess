@@ -56,7 +56,7 @@ Stylesheets.add(t => `
     }
 
     .Square_highlighted {
-        filter: saturate(125%) brightness(110%);
+        filter: saturate(125%) brightness(130%);
         box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.25);
         z-index: 1;
         margin-left: 1.5px;
