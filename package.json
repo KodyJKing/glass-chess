@@ -5,7 +5,7 @@
     "author": "Kody King <kody.j.king@gmail.com>",
     "license": "none",
     "scripts": {
-        "start": "guild start"
+        "start": "node lib/server.js"
     },
     "private": true,
     "devDependencies": {

@@ -4,15 +4,7 @@ import Position from "./Position";
 import Piece from "./Piece";
 import { Type } from "./Type";
 import { Color } from "./Color";
-
-function compareBoards(a: string, b: string) {
-    let format = (x) => (
-        x.split("\n")
-        .map( (x) => x.trim() )
-        .filter( (x) => x.length > 0 )
-    ).join("\n")
-    return format(a) === format(b)
-}
+import search from "./search";
 
 test("parseBoard", t => {
     let board = `
@@ -25,7 +17,7 @@ test("parseBoard", t => {
         P P P P P P P P
         R N B Q K B N R`
     let engine = Engine.parseBoard(board)
-    t.true(compareBoards(board, engine.toString()))
+    t.true(Engine.compareBoards(board, engine.prettyString()))
     t.pass()
 })
 
@@ -46,8 +38,8 @@ test("generateMoves_Rook", t => {
 
     // console.log("\n" + engine.toString())
     let moves = engine.generateMovesAt(pos)
-    let actual = engine.toString(moves)
-    t.true(compareBoards(expected, actual))
+    let actual = engine.prettyString(moves)
+    t.true(Engine.compareBoards(expected, actual))
     // console.log("\n" + actual)
 })
 
@@ -67,8 +59,8 @@ test("generateMoves_Pawn", t => {
 
     // console.log("\n" + engine.toString())
     let moves = engine.generateMovesAt(pos)
-    let actual = engine.toString(moves)
-    t.true(compareBoards(expected, actual))
+    let actual = engine.prettyString(moves)
+    t.true(Engine.compareBoards(expected, actual))
     // console.log("\n" + actual)
 })
 
@@ -90,8 +82,8 @@ test("generateMoves_Knight", t => {
 
     // console.log("\n" + engine.toString())
     let moves = engine.generateMovesAt(pos)
-    let actual = engine.toString(moves)
-    t.true(compareBoards(expected, actual))
+    let actual = engine.prettyString(moves)
+    t.true(Engine.compareBoards(expected, actual))
     // console.log("\n" + actual)
 })
 
@@ -112,10 +104,8 @@ test("isSafe", t => {
 // This made it impossible to pick a move ending in a checkmate in a doomed match.
 // Making alpha beta accept any move when it's best move is null fixed this.
 test("finishDoomedGame", t => {
-    let save = "ത̜೫š๪ࡪ౪çථৌྭ̚ઢژຳبଡ଼Ζ܍č໭ู͎˓๩਩಩R෧ң୥ࣲ༴ಣബࣲ଴ಣ഼ࣲ༻ಣয়ƕߖ¦໺ࣩາ੣ಪϗ࿗ࣔ६Ն׏Ǐ֏Ώ൭ϖ୦཯ʚঞԣ௝֎஦ńଯࣝঝə࢙ӛޖƕ೗Άמۣળڢޕࢪೲ"
-    let engine = new Engine().standardSetup()
-    engine.fromSaveString(save)
-    t.not(engine.alphabeta(), null)
+    let engine = Engine.fromString("ത̜೫š๪ࡪ౪çථৌྭ̚ઢژຳبଡ଼Ζ܍č໭ู͎˓๩਩಩R෧ң୥ࣲ༴ಣബࣲ଴ಣ഼ࣲ༻ಣয়ƕߖ¦໺ࣩາ੣ಪϗ࿗ࣔ६Ն׏Ǐ֏Ώ൭ϖ୦཯ʚঞԣ௝֎஦ńଯࣝঝə࢙ӛޖƕ೗Άמۣળڢޕࢪೲ")
+    t.not(search(engine), null)
     t.pass()
 })
 

@@ -5,6 +5,7 @@ import Context from "@krisnye/glass-platform/ui/Context"
 import Key, { ModelKey } from "@krisnye/glass-platform/data/Key"
 import Model from "@krisnye/glass-platform/data/Model"
 import State from "@krisnye/glass-platform/data/State"
+// import guid from "@krisnye/glass-platform/utility/guid"
 
 import { Engine } from "../engine/Engine"
 import Position from "../engine/Position"
@@ -12,6 +13,8 @@ import Piece from "../engine/Piece"
 import { Type } from "../engine/Type"
 import { Color } from "../engine/Color"
 import Move from "../engine/Move"
+import Game from "../model/Game";
+import search from "../engine/search";
 
 const WIDTH = 800
 const SQUARE_WIDTH = WIDTH / 8
@@ -100,7 +103,7 @@ class AppState extends State {
     static key = Key.create(AppState, "0")
 }
 
-const engine = new Engine().standardSetup()
+var engine = new Engine().standardSetup()
 
 function board(c: Context) {
     let { store, localize, text } = c
@@ -170,6 +173,19 @@ Context.bind(c => {
     let check = engine.inCheck()
     let mate = engine.inMate()
 
+    let w = (window as any)
+    if (!w.load) {
+        w.load = (s) => {
+            engine = Engine.fromString(s)
+            store.patch(AppState.key, { selectX: -1, selectY: -1 })
+        }
+    }
+
+    // let gameKey = Key.create(Game, "0")
+    // if (!store.get(gameKey)) {
+    //     store.patch(gameKey, new Game({ key: gameKey }))
+    // }
+
     div({ class: "Game" })
         div({ style: "flex-grow: 1;" }); end()
         div({ style: "margin: 16px;" })
@@ -178,6 +194,7 @@ Context.bind(c => {
             end()
             render(board)
             div({ style: "padding-top: 8px; display: flex" })
+
                 if (!mate) {
                     text(`Turn: ${Color[engine.turn]}${ check ? ", Check" : ""}`)
                     // text(`Turn: ${Color[engine.turn]}, Net Material Value: ${engine.netMaterialValue}`)
@@ -185,6 +202,7 @@ Context.bind(c => {
                     text(check ? "Checkmate!" : "Stalemate!")
                 }
                 div({ style: "flex-grow: 1" }); end()
+
                 // div({ style: "padding: 2px; display: flex" });
                 //     text("Debug")
                 //     render(Checkbox, {
@@ -213,26 +231,19 @@ Context.bind(c => {
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
                     }
                 }, "Undo")
-                if (!mate) {
-                    const think = () => {
+                button({
+                    disabled: mate || appState.thinking,
+                    onclick() {
                         store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
                         setTimeout(() => {
-                            // let move = engine.alphabeta(6, { materialBias: engine.turn == Color.White ? 20 : 10 })
-                            let move = engine.alphabeta()
+                            let move = search(engine)
                             if (move !== null)
                                 engine.doMove(move)
                             store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
-                            // if (move != null)
-                            //     think()
                         }, 0);
                     }
-                    button({
-                        disabled: appState.thinking,
-                        onclick() {
-                            think()
-                        }
-                    }, appState.thinking ? "Thinking..." : "Think")
-                }
+                }, appState.thinking ? "Thinking..." : "Think")
+
             end()
         end()
         div({ style: "flex-grow: 1;" }); end()

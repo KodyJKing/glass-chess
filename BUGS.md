@@ -1,1 +1,6 @@
-- Alphabeta refuses to finish game one move before checkmate. For example: ത̜೫š๪ࡪ౪çථৌྭ̚ઢژຳبଡ଼Ζ܍č໭ู͎˓๩਩಩R෧ң୥ࣲ༴ಣബࣲ଴ಣ഼ࣲ༻ಣয়ƕߖ¦໺ࣩາ੣ಪϗ࿗ࣔ६Ն׏Ǐ֏Ώ൭ϖ୦཯ʚঞԣ௝֎஦ńଯࣝঝə࢙ӛޖƕ೗Άמۣળڢޕࢪೲ
+TODO:
+- Alphabeta not seeing obvious mate in 2:
+    "തR๪̔౩ңఠçຨŨศƕථ৞ྲྀޚྭࣲ໲ڨ༾ਚजզತϟઙ˛ऴȐ੡ڌ٪̡હེˠഫċදࡑୣজ૬ѱຼʚଜౣܞࠒ๪༜͕௔˓ܛқޛࣛԛƃۉӊɛǄ྽Ĝۢó࢐ೲ൥܄઻ʑЫ಺૴Ζཱུш໬ສଛલ۬ಱ෧ȉढ़֝൭౩୥Ĥढ़बഢ੡࢛ɑݕମ՝ࡧ۰ৣ఍஭ݖ࣓֎ӋΗ୍ן͎ߗΦןমߧஶ৯ආ௧ˣয়ࣛߧۣয়ࣛߧۣয়ࣛߧ"
+TODONE:
+- Alphabeta refuses to finish game one move before checkmate. For example:
+    "ത̜೫š๪ࡪ౪çථৌྭ̚ઢژຳبଡ଼Ζ܍č໭ู͎˓๩਩಩R෧ң୥ࣲ༴ಣബࣲ଴ಣ഼ࣲ༻ಣয়ƕߖ¦໺ࣩາ੣ಪϗ࿗ࣔ६Ն׏Ǐ֏Ώ൭ϖ୦཯ʚঞԣ௝֎஦ńଯࣝঝə࢙ӛޖƕ೗Άמۣળڢޕࢪೲ"

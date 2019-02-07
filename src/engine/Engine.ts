@@ -4,6 +4,7 @@ import Piece from "./Piece";
 import Position from "./Position";
 import Move from "./Move";
 import { pieceToChar, charToPiece } from "./common";
+import pieceValues from "./pieceValues";
 
 const Pos = Position.create
 const posX = Position.get.x
@@ -13,16 +14,6 @@ const EMPTY = Piece.create(0, 0, 0)
 
 enum Ternary { always, never, either }
 
- const pieceValues = [
-     0,       // Empty
-     1,       // Pawn
-     3,       // Knight
-     3,       // Bishop
-     5,       // Rook
-     9,       // Queen
-     99999    // King
- ]
-
 export class Engine {
 
     // Representation
@@ -31,6 +22,7 @@ export class Engine {
     turn!: Color
     netMaterialValue!: number
     history!: number[]
+    totalSearchTime = 0
     constructor() {
         try { (window as any).engine = this } catch (e) {}
         this.clear()
@@ -41,6 +33,7 @@ export class Engine {
         this.turn = Color.White
         this.netMaterialValue = 0
         this.history = []
+        this.totalSearchTime = 0
     }
 
     standardSetup() {
@@ -73,7 +66,7 @@ export class Engine {
         return engine
     }
 
-    toString(moves?: number[]) {
+    prettyString(moves?: number[]) {
         let positions = moves ? moves.map((move) => Move.get.to(move)) : []
         let result: string[] = []
         for (let y = 0; y < 8; y++) {
@@ -91,7 +84,29 @@ export class Engine {
         return result.join("\n")
     }
 
-    saveString() {
+    static compareBoards(a: string, b: string) {
+        let format = (x) => (
+            x.split("\n")
+            .map( (x) => x.trim() )
+            .filter( (x) => x.length > 0 )
+        ).join("\n")
+        return format(a) === format(b)
+    }
+
+    positionString() {
+        let parts = new Array(24)
+        let i = 0
+        for (let y = 0; y < 8; y++)
+            for (let x = 0; x < 8; x += 3)
+                parts[i++] = String.fromCharCode(
+                    (this.pieces[Pos(x, y)] << 10) |
+                    (this.pieces[Pos(x + 1, y)] << 5) |
+                    (this.pieces[Pos(x + 2, y)] || 0)
+                )
+        return parts.join("")
+    }
+
+    toString() {
         let parts = new Array()
         for (let move of this.history)
             parts.push(
@@ -102,9 +117,12 @@ export class Engine {
         return parts.join("")
     }
 
-    fromSaveString(movesString: string) {
+    static fromString(movesString: string) {
+        let engine = new Engine()
+        engine.standardSetup()
         for (let i = 0; i < movesString.length; i++)
-            this.doMove(movesString.charCodeAt(i))
+            engine.doMove(movesString.charCodeAt(i))
+        return engine
     }
 
     // Move Generation
@@ -356,151 +374,6 @@ export class Engine {
 
     inMate() {
         return this.allMoves(true).length === 0
-    }
-
-    // AI
-
-    hashString() {
-        let parts = new Array(24)
-        let i = 0
-        for (let y = 0; y < 8; y++)
-            for (let x = 0; x < 8; x += 3)
-                parts[i++] = String.fromCharCode(
-                    (this.pieces[Pos(x, y)] << 10) |
-                    (this.pieces[Pos(x + 1, y)] << 5) |
-                    (this.pieces[Pos(x + 2, y)] || 0)
-                )
-        return parts.join("")
-    }
-
-    heuristic(depth, options) {
-        if (depth === 0)
-            return this.netMaterialValue * options.materialBias
-        if (depth > 1)
-            return 0
-
-        let control = 0
-        let threat = 0
-        let threateningPieces = 0
-        let development = 0
-        let support = 0
-
-        const edgeDistance = (pos) => {
-            let xDist = 3.5 - Math.abs(Position.get.x(pos) - 3.5)
-            let yDist = 3.5 - Math.abs(Position.get.y(pos) - 3.5)
-            return xDist + yDist
-        }
-
-        for (let x = 0; x < 8; x++) {
-            for (let y = 0; y < 8; y++) {
-                let pos = Pos(x, y)
-                let piece = this.pieces[pos]
-                let type = Piece.get.type(piece)
-                if (type === Type.Empty)
-                    continue
-
-                let invPieceValue = 1 / pieceValues[type]
-                let color = Piece.get.color(piece)
-                let valueSign = color === Color.White ? 1 : -1
-
-                development += edgeDistance(pos) * valueSign * invPieceValue
-
-                let threatening = false
-                for (let move of this.generateMovesAt(pos, true)) {
-                    let capturedType = Piece.get.type(Move.get.captured(move))
-                    let capturedColor = Piece.get.color(Move.get.captured(move))
-                    let captured = capturedType !== Type.Empty
-                    if (captured && capturedColor == color) {
-                        support += valueSign * invPieceValue / pieceValues[capturedType]
-                    } else {
-                        let to = Move.get.to(move)
-                        control += (1 + edgeDistance(to) * invPieceValue) * valueSign
-                        // control += (1 + edgeDistance(to)) * valueSign * invPieceValue
-                        if (captured) {
-                            threatening = true
-                            let value = capturedType == Type.King ? 10 : pieceValues[capturedType] * invPieceValue
-                            threat += valueSign * value
-                        }
-                    }
-                }
-                if (threatening)
-                    threateningPieces += valueSign
-            }
-        }
-        return this.netMaterialValue * options.materialBias + (control + threat + threateningPieces + development + support)
-    }
-
-    totalSearchTime = 0
-    alphabeta(depth = 5, options = { materialBias: 10 }) {
-        let startTime = Date.now()
-        let evaluations = 0
-        let cache = new Map<string, number>()
-
-        let search = (depth = 0, rootCall = true, alpha = -Infinity, beta = Infinity) => {
-            let isLeaf = depth <= 0
-            let turn = this.turn
-            let valueSign = (this.turn === Color.White) ? 1 : -1
-
-            let baseHashString = this.hashString()
-            let hashString = baseHashString + depth + "," + turn
-            // let prevHashString = baseHashString + (depth - 1) + "," + turn
-            if (!rootCall && !isLeaf && cache.has(hashString))
-                return cache.get(hashString) as number
-
-            let pairs = this.allMoves().map((move) => {
-                this.doMove(move)
-                let value = this.heuristic(isLeaf ? 0 : 1, options)
-                this.undoMove()
-                return [move, value]
-            })
-            pairs.sort((a,b) => ((b[1] - a[1]) * valueSign))
-
-            let best: number | null = null
-            let bestValue = -Infinity * valueSign
-            let alphaBetaCutoff = false
-            for (let [move] of pairs) {
-                let value = 0
-                this.doMove(move)
-                    evaluations++
-                    value = this.heuristic(depth, options)
-                    if (!isLeaf)
-                        value += search(depth - 1, false, alpha, beta) as number
-                    let isImprovement = best === null  || value * valueSign > bestValue * valueSign
-                    if (isImprovement && !this.inCheck(turn)) {
-                        best = move
-                        bestValue = value
-                        if (turn === Color.White)
-                            alpha = Math.max(alpha, bestValue)
-                        else
-                            beta = Math.min(beta, bestValue)
-                        alphaBetaCutoff = (alpha >= beta)
-                    }
-                this.undoMove()
-                if (alphaBetaCutoff)
-                    break
-            }
-
-            if (!isLeaf)
-                cache.set(hashString, bestValue)
-
-            return rootCall ? best : bestValue
-        }
-
-        let result = search(depth)
-        // let result
-        // for (let i = 1; i <= depth; i++) {
-        //     result = search(i)
-        //     console.log(i)
-        // }
-
-        let dt = (Date.now() - startTime)
-
-        let addCommas = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-        this.totalSearchTime += dt
-        let evalsPerMs = (evaluations / dt).toString().split(".")[0]
-        console.log(`${addCommas(evaluations)} evals | ${addCommas(dt)} ms | ${addCommas(evalsPerMs)} evals/ms | total search time: ${addCommas(this.totalSearchTime)} ms`)
-
-        return result
     }
 
 }
