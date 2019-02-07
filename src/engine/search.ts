@@ -13,7 +13,7 @@ export default function(engine: Engine, depth = 5, options = { materialBias: 10 
     let evaluations = 0
     let cache = new Map<string, number>()
 
-    let heuristic = (depth, options) => {
+    let heuristic = (depth) => {
         if (depth === 0)
             return engine.netMaterialValue * options.materialBias
         if (depth > 1)
@@ -80,7 +80,7 @@ export default function(engine: Engine, depth = 5, options = { materialBias: 10 
 
         let pairs = engine.allMoves().map((move) => {
             engine.doMove(move)
-            let value = heuristic(isLeaf ? 0 : 1, options)
+            let value = heuristic(isLeaf ? 0 : 1)
             engine.undoMove()
             return [move, value]
         })
@@ -93,7 +93,7 @@ export default function(engine: Engine, depth = 5, options = { materialBias: 10 
             let value = 0
             engine.doMove(move)
                 evaluations++
-                value = heuristic(depth, options)
+                value = heuristic(depth)
                 if (!isLeaf)
                     value += search(depth - 1, false, alpha, beta) as number
 
