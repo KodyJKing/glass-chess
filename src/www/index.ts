@@ -48,7 +48,7 @@ Stylesheets.add(t => `
     }
 
     .Rotated {
-        // transform:rotate(180deg);
+        transform:rotate(180deg);
     }
 
     .Square {
@@ -117,7 +117,9 @@ function board(c: Context) {
     for (let move of moves)
         selection[Move.get.to(move)] = move
 
-    let rotate = engine.turn === Color.Black
+    // let rotate = engine.turn === Color.Black
+    // let rotate = true
+    let rotate = false
 
     div({ class: "Board" + (rotate ? " Rotated" : "") })
     for (let x = 0; x < 8; x++) {

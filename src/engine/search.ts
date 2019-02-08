@@ -8,16 +8,14 @@ import { Color } from "./Color"
 
 const Pos = Position.create
 
-export default function(engine: Engine, depth = 5, options = { materialBias: 10 }) {
+export default function(engine: Engine, options = { depth: 6, materialBias: 10 }) {
     let startTime = Date.now()
     let evaluations = 0
     let cache = new Map<string, number>()
 
-    let heuristic = (depth) => {
-        if (depth === 0)
+    const heuristic = (useFast) => {
+        if (useFast)
             return engine.netMaterialValue * options.materialBias
-        if (depth > 1)
-            return 0
 
         let control = 0
         let threat = 0
@@ -43,7 +41,7 @@ export default function(engine: Engine, depth = 5, options = { materialBias: 10 
                 let color = Piece.get.color(piece)
                 let valueSign = color === Color.White ? 1 : -1
 
-                development += edgeDistance(pos) * valueSign * invPieceValue
+                development += edgeDistance(pos) * invPieceValue * valueSign * 5
 
                 let threatening = false
                 for (let move of engine.generateMovesAt(pos, true)) {
@@ -69,39 +67,45 @@ export default function(engine: Engine, depth = 5, options = { materialBias: 10 
         return engine.netMaterialValue * options.materialBias + (control + threat + threateningPieces + development + support)
     }
 
-    let search = (depth = 0, rootCall = true, alpha = -Infinity, beta = Infinity) => {
-        let isLeaf = depth <= 0
+    const search = (depth = 0, rootCall = true, alpha = -Infinity, beta = Infinity) => {
+        evaluations++
+        if (depth <= 0)
+            return heuristic(true)
+
         let turn = engine.turn
         let valueSign = (engine.turn === Color.White) ? 1 : -1
 
         let positionString = engine.positionString() + depth + "," + turn
-        if (!rootCall && !isLeaf && cache.has(positionString))
+        if (!rootCall && cache.has(positionString))
             return cache.get(positionString) as number
 
-        let pairs = engine.allMoves().map((move) => {
+
+        let pairs = engine.allMoves(true).map((move) => {
             engine.doMove(move)
-            let value = heuristic(isLeaf ? 0 : 1)
+            let h = heuristic(depth < 3)
             engine.undoMove()
-            return [move, value]
+            return [move, h]
         })
         pairs.sort((a,b) => ((b[1] - a[1]) * valueSign))
 
         let best: number | null = null
         let bestValue = -Infinity * valueSign
         let alphaBetaCutoff = false
-        for (let [move] of pairs) {
+        for (let [move, h] of pairs) {
             let value = 0
             engine.doMove(move)
-                evaluations++
-                value = heuristic(depth)
-                if (!isLeaf)
-                    value += search(depth - 1, false, alpha, beta) as number
-
-                // console.log(engine.prettyString())
-                // console.log(value)
+                // let capture = Piece.get.type(Move.get.captured(move)) != Type.Empty
+                // let _depth = (depth == 1 && capture) ? 1 : depth - 1
+                let _depth = depth - 1
+                value = (search(_depth, false, alpha, beta) as number)
+                // The advanced heuristic is too slow to use on leaves so instead it's evaluated on the parent.
+                if (depth == 1)
+                    value += heuristic(false)
 
                 let isImprovement = best === null  || value * valueSign > bestValue * valueSign
-                if (isImprovement && !engine.inCheck(turn)) {
+                if (isImprovement) {
+                    // console.log(engine.prettyString())
+                    // console.log(value)
                     best = move
                     bestValue = value
                     if (turn === Color.White)
@@ -115,13 +119,12 @@ export default function(engine: Engine, depth = 5, options = { materialBias: 10 
                 break
         }
 
-        if (!isLeaf)
-            cache.set(positionString, bestValue)
+        cache.set(positionString, bestValue)
 
         return rootCall ? best : bestValue
     }
 
-    let result = search(depth)
+    let result = search(options.depth)
     let dt = (Date.now() - startTime)
 
     let addCommas = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
