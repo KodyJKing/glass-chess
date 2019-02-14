@@ -89,8 +89,6 @@ export default function(engine: Engine, options = { depth: 6 }) {
 
     const search = (depth = 0, rootCall = true, alpha = -Infinity, beta = Infinity) => {
         evaluations++
-        if (depth <= 0)
-            return heuristic(true)
 
         let turn = engine.turn
         let valueSign = (engine.turn === Color.White) ? 1 : -1
@@ -109,27 +107,25 @@ export default function(engine: Engine, options = { depth: 6 }) {
 
         let best: number | null = null
         let bestValue = -Infinity * valueSign
-        let alphaBetaCutoff = false
+        let cutoff = false
         for (let [move, h] of pairs) {
             let value = 0
             engine.doMove(move)
-                value = (search(depth - 1, false, alpha, beta) as number)
+                value = depth == 1 ? h : (search(depth - 1, false, alpha, beta) as number)
                 // The advanced heuristic is too slow to use on leaves so instead it's evaluated on the parent.
                 if (depth == 1)
                     value += heuristic(false)
-
-                let isImprovement = best === null  || value * valueSign > bestValue * valueSign
-                if (isImprovement) {
+                if (best === null  || value * valueSign > bestValue * valueSign) {
                     best = move
                     bestValue = value
                     if (turn === Color.White)
                         alpha = Math.max(alpha, bestValue)
                     else
                         beta = Math.min(beta, bestValue)
-                    alphaBetaCutoff = (alpha >= beta)
+                    cutoff = (alpha >= beta)
                 }
             engine.undoMove()
-            if (alphaBetaCutoff)
+            if (cutoff)
                 break
         }
 
