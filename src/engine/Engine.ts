@@ -175,6 +175,13 @@ export class Engine {
                 this.slide(pos, 0, dy, moved ? 1 : 2, color, selfCaptures, Ternary.never, moves)
                 this.slide(pos, -1, dy, 1, color, selfCaptures, Ternary.always, moves)
                 this.slide(pos, 1, dy, 1, color, selfCaptures, Ternary.always, moves)
+                if (
+                    (Position.get.y(pos) == 6 && color == Color.Black) ||
+                    (Position.get.y(pos) == 1 && color == Color.White)
+                ) {
+                    for (let i = 0; i < moves.length; i++)
+                        moves[i] = Move.set.promotion(moves[i], 1)
+                }
                 break
             }
             case Type.Knight: {
@@ -257,8 +264,10 @@ export class Engine {
     updateMaterial(move: number, undo: boolean) {
         let type = Piece.get.type(Move.get.captured(move))
         let isBlack = this.turn === Color.Black
-        let sign = (isBlack === undo) ?  1 : -1
-        this.netMaterialValue += sign * pieceValues[type]
+        let sign = (isBlack === undo) ?  -1 : 1
+        this.netMaterialValue -= pieceValues[type] * sign
+        if (Move.get.promotion(move))
+            this.netMaterialValue += (pieceValues[Type.Queen] - pieceValues[Type.Pawn]) * sign
     }
 
     doMove(move: number) {
@@ -267,6 +276,8 @@ export class Engine {
         let from = Move.get.from(move)
         let to = Move.get.to(move)
         let piece = this.pieces[from]
+        if (Move.get.promotion(move))
+            piece = Piece.set.type(piece, Type.Queen)
         this.pieces[from] = EMPTY
         this.pieces[to] = Piece.set.moved(piece, 1)
 
@@ -284,6 +295,8 @@ export class Engine {
         let from = Move.get.from(move)
         let to = Move.get.to(move)
         let piece = this.pieces[to]
+        if (Move.get.promotion(move))
+            piece = Piece.set.type(piece, Type.Pawn)
         let hadMoved = Move.get.firstMove(move) ? 0 : 1
         this.pieces[from] = Piece.set.moved(piece,hadMoved)
         this.pieces[to] = Move.get.captured(move)

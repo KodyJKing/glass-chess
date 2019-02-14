@@ -5,7 +5,6 @@ import Context from "@krisnye/glass-platform/ui/Context"
 import Key, { ModelKey } from "@krisnye/glass-platform/data/Key"
 import Model from "@krisnye/glass-platform/data/Model"
 import State from "@krisnye/glass-platform/data/State"
-// import guid from "@krisnye/glass-platform/utility/guid"
 
 import { Engine } from "../engine/Engine"
 import Position from "../engine/Position"
@@ -94,6 +93,9 @@ class AppState extends State {
     hoverY!: number
 
     @Model.property({ type: "boolean", default: false })
+    rotate!: boolean
+
+    @Model.property({ type: "boolean", default: false })
     debug!: boolean
 
     @Model.property({ type: "boolean", default: false })
@@ -118,8 +120,9 @@ function board(c: Context) {
         selection[Move.get.to(move)] = move
 
     // let rotate = engine.turn === Color.Black
+    // let rotate = false
     // let rotate = true
-    let rotate = false
+    let rotate = appState.rotate
 
     div({ class: "Board" + (rotate ? " Rotated" : "") })
     for (let x = 0; x < 8; x++) {
@@ -140,9 +143,16 @@ function board(c: Context) {
                 onclick() {
                     if (selected) {
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                    } else if (highlighted) {
+                    } else if (highlighted && !appState.thinking) {
                         engine.doMove(move)
-                        store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                        // store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                        store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
+                        setTimeout(() => {
+                            let move = search(engine)
+                            if (move !== null)
+                                engine.doMove(move)
+                            store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
+                        }, 100);
                     } else {
                         if (piece.color === engine.turn || appState.debug)
                             store.patch(AppState.key, { selectX: x, selectY: y })
@@ -215,6 +225,11 @@ Context.bind(c => {
                 //         }
                 //     })
                 // end()
+                button({
+                    onclick() {
+                        store.patch(AppState.key, { rotate: !appState.rotate })
+                    }
+                }, "Rotate")
                 button({
                     disabled: appState.thinking,
                     onclick() {
