@@ -261,13 +261,11 @@ export class Engine {
         }
     }
 
-    updateMaterial(move: number, undo: boolean) {
-        let type = Piece.get.type(Move.get.captured(move))
-        let isBlack = this.turn === Color.Black
-        let sign = (isBlack === undo) ?  -1 : 1
-        this.netMaterialValue -= pieceValues[type] * sign
-        if (Move.get.promotion(move))
-            this.netMaterialValue += (pieceValues[Type.Queen] - pieceValues[Type.Pawn]) * sign
+    setPiece(pos: number, piece: number) {
+        let captured = this.pieces[pos]
+        this.netMaterialValue -= pieceValues[Piece.get.type(captured)] * (Piece.get.color(captured) == Color.White ? 1 : -1)
+        this.netMaterialValue += pieceValues[Piece.get.type(piece)] * (Piece.get.color(piece) == Color.White ? 1 : -1)
+        this.pieces[pos] = piece
     }
 
     doMove(move: number) {
@@ -275,14 +273,12 @@ export class Engine {
 
         let from = Move.get.from(move)
         let to = Move.get.to(move)
-        let piece = this.pieces[from]
+        let piece = Piece.set.moved(this.pieces[from], 1)
         if (Move.get.promotion(move))
             piece = Piece.set.type(piece, Type.Queen)
-        this.pieces[from] = EMPTY
-        this.pieces[to] = Piece.set.moved(piece, 1)
 
-        this.updateMaterial(move, false)
-
+        this.setPiece(from, EMPTY)
+        this.setPiece(to, piece)
         this.turn = (this.turn + 1) % 2
 
         if (Piece.get.type(piece) === Type.King)
@@ -294,16 +290,13 @@ export class Engine {
 
         let from = Move.get.from(move)
         let to = Move.get.to(move)
-        let piece = this.pieces[to]
+        let piece = Piece.set.moved(this.pieces[to], Move.get.firstMove(move) ? 0 : 1)
         if (Move.get.promotion(move))
             piece = Piece.set.type(piece, Type.Pawn)
-        let hadMoved = Move.get.firstMove(move) ? 0 : 1
-        this.pieces[from] = Piece.set.moved(piece,hadMoved)
-        this.pieces[to] = Move.get.captured(move)
 
+        this.setPiece(from, piece)
+        this.setPiece(to, Move.get.captured(move))
         this.turn = (this.turn + 1) % 2
-
-        this.updateMaterial(move, true)
 
         if (Piece.get.type(piece) === Type.King)
             this.tryCastle(to, from, true)
