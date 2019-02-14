@@ -107,6 +107,16 @@ class AppState extends State {
 
 var engine = new Engine().standardSetup()
 
+function think(c) {
+    c.store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
+    setTimeout(() => {
+        let move = search(engine)
+        if (move !== null)
+            engine.doMove(move)
+        c.store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
+    }, 100);
+}
+
 function board(c: Context) {
     let { store, localize, text } = c
     let { render, end, div, img } = HtmlContext(c)
@@ -146,13 +156,7 @@ function board(c: Context) {
                     } else if (highlighted && !appState.thinking) {
                         engine.doMove(move)
                         // store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                        store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
-                        setTimeout(() => {
-                            let move = search(engine)
-                            if (move !== null)
-                                engine.doMove(move)
-                            store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
-                        }, 100);
+                        think(c)
                     } else {
                         if (piece.color === engine.turn || appState.debug)
                             store.patch(AppState.key, { selectX: x, selectY: y })
@@ -251,13 +255,7 @@ Context.bind(c => {
                 button({
                     disabled: mate || appState.thinking,
                     onclick() {
-                        store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
-                        setTimeout(() => {
-                            let move = search(engine)
-                            if (move !== null)
-                                engine.doMove(move)
-                            store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
-                        }, 0);
+                        think(c)
                     }
                 }, appState.thinking ? "Thinking..." : "Think")
 

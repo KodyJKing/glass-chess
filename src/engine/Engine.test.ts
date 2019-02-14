@@ -109,6 +109,12 @@ test("finishDoomedGame", t => {
     t.pass()
 })
 
+test("searchPerformance", t => {
+    let engine = new Engine().standardSetup()
+    t.not(search(engine), null)
+    t.pass()
+})
+
 // test("moveGenPerformance", t => {
 //     let engine = new Game().standardSetup()
 //     let pos = Position.create(0, 2)
