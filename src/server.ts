@@ -1,13 +1,6 @@
-import express from "express"
+import express, { Request, Response } from "express"
+import * as webServer from "@krisnye/glass-platform/server/webServer"
+import path from "path"
 
-const app = express()
-app.use(express.static("../www"))
-
-app.get("/api/hello", (req, res) => {
-    res.type("text/json").send(JSON.stringify({ message: "Hello from the server" }))
-})
-
-const port = process.env.PORT || 3000
-app.listen(port, () => {
-    console.log(`App listening on port ${port}.`)
-})
+// create a standard express app with a static www server and www/api handlers
+const app = webServer.create(path.join(__dirname, "../"))

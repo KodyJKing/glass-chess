@@ -9,11 +9,14 @@ import { Color } from "./Color"
 const Pos = Position.create
 
 export default function(engine: Engine, options = { depth: 6 }) {
+
     let startTime = Date.now()
     let evaluations = 0
     let cache = new Map<string, number>()
 
     const heuristic = (useFast) => {
+        evaluations++
+
         const config = {
             material: 10,
             control: 5,
@@ -88,8 +91,6 @@ export default function(engine: Engine, options = { depth: 6 }) {
     }
 
     const search = (depth = 0, rootCall = true, alpha = -Infinity, beta = Infinity) => {
-        evaluations++
-
         let turn = engine.turn
         let valueSign = (engine.turn === Color.White) ? 1 : -1
 
