@@ -5,6 +5,7 @@ import Context from "@krisnye/glass-platform/ui/Context"
 import Key, { ModelKey } from "@krisnye/glass-platform/data/Key"
 import Model from "@krisnye/glass-platform/data/Model"
 import State from "@krisnye/glass-platform/data/State"
+import invoke from "@krisnye/glass-platform/server/invoke"
 
 import { Engine } from "../engine/Engine"
 import Position from "../engine/Position"
@@ -107,14 +108,23 @@ class AppState extends State {
 
 var engine = new Engine().standardSetup()
 
+var LOCAL_AI = false
 function think(c) {
     c.store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
-    setTimeout(() => {
-        let move = search(engine)
-        if (move !== null)
+    let finish = move => {
+        if (typeof move == "number")
             engine.doMove(move)
         c.store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
-    }, 100);
+    }
+    if (LOCAL_AI) {
+        setTimeout(() => {
+            finish(search(engine))
+        }, 100);
+    } else {
+        invoke("/api/search", { position: engine.toString() }).then(move => {
+            finish(move)
+        })
+    }
 }
 
 function board(c: Context) {
@@ -129,9 +139,6 @@ function board(c: Context) {
     for (let move of moves)
         selection[Move.get.to(move)] = move
 
-    // let rotate = engine.turn === Color.Black
-    // let rotate = false
-    // let rotate = true
     let rotate = appState.rotate
 
     div({ class: "Board" + (rotate ? " Rotated" : "") })

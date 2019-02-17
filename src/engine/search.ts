@@ -8,11 +8,12 @@ import { Color } from "./Color"
 
 const Pos = Position.create
 
-export default function(engine: Engine, options = { depth: 6 }) {
+export default function(engine: Engine, options: any = {}) {
+    options = Object.assign({ depth: 6, rootCall: true }, options)
 
     let startTime = Date.now()
     let evaluations = 0
-    let cache = new Map<string, number>()
+    let cache = options.cache || new Map<string, number>()
 
     const heuristic = (useFast) => {
         evaluations++
@@ -90,7 +91,7 @@ export default function(engine: Engine, options = { depth: 6 }) {
             + support * config.support
     }
 
-    const search = (depth = 0, rootCall = true, alpha = -Infinity, beta = Infinity) => {
+    const search = (depth = 0, rootCall = true, alpha = options.alpha || -Infinity, beta = options.beta || Infinity) => {
         let turn = engine.turn
         let valueSign = (engine.turn === Color.White) ? 1 : -1
 
@@ -114,7 +115,7 @@ export default function(engine: Engine, options = { depth: 6 }) {
             engine.doMove(move)
                 value = depth == 1 ? h : (search(depth - 1, false, alpha, beta) as number)
                 // The advanced heuristic is too slow to use on leaves so instead it's evaluated on the parent.
-                if (depth == 1)
+                if (depth == 2)
                     value += heuristic(false)
                 if (best === null  || value * valueSign > bestValue * valueSign) {
                     best = move
@@ -132,17 +133,18 @@ export default function(engine: Engine, options = { depth: 6 }) {
 
         cache.set(positionString, bestValue)
 
-        return rootCall ? best: bestValue
+        return rootCall ? [best, bestValue]: bestValue
     }
 
-    let result = search(options.depth)
+    let [result, resultValue] = search(options.depth) as number[]
 
-    let dt = (Date.now() - startTime)
+    if (options.rootCall) {
+        let dt = (Date.now() - startTime)
+        let addCommas = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        engine.totalSearchTime += dt
+        let evalsPerMs = (evaluations / dt).toString().split(".")[0]
+        console.log(`${addCommas(evaluations)} evals | ${addCommas(dt)} ms | ${addCommas(evalsPerMs)} evals/ms | total search time: ${addCommas(engine.totalSearchTime)} ms`)
+    }
 
-    let addCommas = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-    engine.totalSearchTime += dt
-    let evalsPerMs = (evaluations / dt).toString().split(".")[0]
-    console.log(`${addCommas(evaluations)} evals | ${addCommas(dt)} ms | ${addCommas(evalsPerMs)} evals/ms | total search time: ${addCommas(engine.totalSearchTime)} ms`)
-
-    return result
+    return options.rootCall ? result : resultValue
 }

@@ -5,6 +5,7 @@ import Piece from "./Piece";
 import { Type } from "./Type";
 import { Color } from "./Color";
 import search from "./search";
+import { parallelSearch } from "./parallelSearch";
 
 test("parseBoard", t => {
     let board = `
@@ -103,17 +104,17 @@ test("isSafe", t => {
 // Previously, alphabeta would ony accept moves which were an improvment when searching a node.
 // This made it impossible to pick a move ending in a checkmate in a doomed match.
 // Making alpha beta accept any move when it's best move is null fixed this.
-test("finishDoomedGame", t => {
-    let engine = Engine.fromString("ത̜೫š๪ࡪ౪çථৌྭ̚ઢژຳبଡ଼Ζ܍č໭ู͎˓๩਩಩R෧ң୥ࣲ༴ಣബࣲ଴ಣ഼ࣲ༻ಣয়ƕߖ¦໺ࣩາ੣ಪϗ࿗ࣔ६Ն׏Ǐ֏Ώ൭ϖ୦཯ʚঞԣ௝֎஦ńଯࣝঝə࢙ӛޖƕ೗Άמۣળڢޕࢪೲ")
-    t.not(search(engine), null)
-    t.pass()
-})
+// test("finishDoomedGame", t => {
+//     let engine = Engine.fromString("ത̜೫š๪ࡪ౪çථৌྭ̚ઢژຳبଡ଼Ζ܍č໭ู͎˓๩਩಩R෧ң୥ࣲ༴ಣബࣲ଴ಣ഼ࣲ༻ಣয়ƕߖ¦໺ࣩາ੣ಪϗ࿗ࣔ६Ն׏Ǐ֏Ώ൭ϖ୦཯ʚঞԣ௝֎஦ńଯࣝঝə࢙ӛޖƕ೗Άמۣળڢޕࢪೲ")
+//     t.not(search(engine), null)
+//     t.pass()
+// })
 
-test("searchPerformance", t => {
-    let engine = new Engine().standardSetup()
-    t.not(search(engine), null)
-    t.pass()
-})
+// test("searchPerformance", t => {
+//     let engine = new Engine().standardSetup()
+//     t.not(search(engine), null)
+//     t.pass()
+// })
 
 // test("moveGenPerformance", t => {
 //     let engine = new Game().standardSetup()
