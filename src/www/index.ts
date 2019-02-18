@@ -110,6 +110,8 @@ var engine = new Engine().standardSetup()
 
 var LOCAL_AI = false
 function think(c) {
+    if (engine.inMate())
+        return
     c.store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
     let finish = move => {
         if (typeof move == "number")
@@ -162,7 +164,7 @@ function board(c: Context) {
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
                     } else if (highlighted && !appState.thinking) {
                         engine.doMove(move)
-                        // store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                        store.patch(AppState.key, { selectX: -1, selectY: -1 })
                         think(c)
                     } else {
                         if (piece.color === engine.turn || appState.debug)
@@ -271,8 +273,8 @@ Context.bind(c => {
         div({ style: "flex-grow: 1;" }); end()
         if (check && mate && engine.history.length <= 10) {
             iframe({
-                style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)",
-                width: 560, height: 315, src: "https://www.youtube.com/embed/0xKBsYVCdDk",
+                style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none",
+                width: 560, height: 315, src: "https://www.youtube.com/embed/0xKBsYVCdDk?controls=0&autoplay=1&showinfo=0",
                 frameborder: "0",  allow:"accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
             })
             end()

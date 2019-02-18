@@ -7,6 +7,7 @@ import { Type } from "./Type"
 import { Color } from "./Color"
 
 const Pos = Position.create
+const MAX_VALUE = Number.MAX_SAFE_INTEGER // Infinity
 
 export default function(engine: Engine, options: any = {}) {
     options = Object.assign({ depth: 6, rootCall: true }, options)
@@ -28,7 +29,7 @@ export default function(engine: Engine, options: any = {}) {
         }
 
         if (engine.inCheck() && engine.inMate())
-            return engine.turn == Color.White ? -Infinity : Infinity
+            return engine.turn == Color.White ? -MAX_VALUE : MAX_VALUE
 
         if (useFast)
             return engine.netMaterialValue * config.material
@@ -91,7 +92,7 @@ export default function(engine: Engine, options: any = {}) {
             + support * config.support
     }
 
-    const search = (depth = 0, rootCall = true, alpha = options.alpha || -Infinity, beta = options.beta || Infinity) => {
+    const search = (depth = 0, rootCall = true, alpha = options.alpha || -MAX_VALUE, beta = options.beta || MAX_VALUE) => {
         let turn = engine.turn
         let valueSign = (engine.turn === Color.White) ? 1 : -1
 
@@ -108,14 +109,14 @@ export default function(engine: Engine, options: any = {}) {
         pairs.sort((a,b) => ((b[1] - a[1]) * valueSign))
 
         let best: number | null = null
-        let bestValue = -Infinity * valueSign
+        let bestValue = -MAX_VALUE * valueSign
         let cutoff = false
         for (let [move, h] of pairs) {
             let value = 0
             engine.doMove(move)
                 value = depth == 1 ? h : (search(depth - 1, false, alpha, beta) as number)
                 // The advanced heuristic is too slow to use on leaves so instead it's evaluated on the parent.
-                if (depth == 2)
+                if (depth == 3)
                     value += heuristic(false)
                 if (best === null  || value * valueSign > bestValue * valueSign) {
                     best = move
