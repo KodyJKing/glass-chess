@@ -65,4 +65,4 @@ process.on("message", ([position, move, alpha, beta]) => {
     value = Math.max(Number.MIN_SAFE_INTEGER, value)
     value = Math.min(Number.MAX_SAFE_INTEGER, value)
     process.send([move, value])
-}
+})

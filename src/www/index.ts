@@ -206,10 +206,10 @@ Context.bind(c => {
         }
     }
 
-    // let gameKey = Key.create(Game, "0")
-    // if (!store.get(gameKey)) {
-    //     store.patch(gameKey, new Game({ key: gameKey }))
-    // }
+    let gameKey = Key.create(Game, "0")
+    if (!store.get(gameKey)) {
+        store.patch(gameKey, new Game({ key: gameKey }))
+    }
 
     div({ class: "Game" })
         div({ style: "flex-grow: 1;" }); end()
