@@ -1,11 +1,11 @@
 
 // must add local build path to node paths
-module.paths.push("C:\\code\\xpoint\\build\\node_modules")
+module.paths.push("/home/kody/code/glass/build/node_modules")
 const path = require("path") 
 const webroot = path.join(process.cwd(), "./lib/www")
 const webpack = require("webpack")
 let config = {
-    entry: {"api\\search":"./lib/www/api\\search.js","index":"./lib/www/index.js"},
+    entry: {"index":"./lib/www/index.js"},
     output: {
         path: webroot,
         filename: "[name].pack.js",

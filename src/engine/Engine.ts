@@ -125,6 +125,14 @@ export class Engine {
         return engine
     }
 
+    static fromHistory(moves: number[]) {
+        let engine = new Engine()
+        engine.standardSetup()
+        for (let move of moves)
+            engine.doMove(move)
+        return engine
+    }
+
     // Move Generation
 
     slide(from: number, dx: number, dy: number, max: number, color: Color, selfCaptures: boolean, captures: Ternary, moves: number[]): number {

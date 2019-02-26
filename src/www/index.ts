@@ -1,4 +1,3 @@
-import Checkbox from "@krisnye/glass-platform/ui/html/components/Checkbox"
 import Stylesheets from "@krisnye/glass-platform/ui/html/Stylesheets"
 import HtmlContext from "@krisnye/glass-platform/ui/html/HtmlContext"
 import Context from "@krisnye/glass-platform/ui/Context"
@@ -106,34 +105,34 @@ class AppState extends State {
     static key = Key.create(AppState, "0")
 }
 
-var engine = new Engine().standardSetup()
-
 var LOCAL_AI = false
-function think(c) {
+function think(c: Context, gameKey: Key) {
+    let { store } = c
+    let game = store.get(gameKey) as Game
+    let engine = game.engine
     if (engine.inMate())
         return
     c.store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
     let finish = move => {
         if (typeof move == "number")
-            engine.doMove(move)
+            game.doMove(store, move)
         c.store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
     }
-    if (LOCAL_AI) {
-        setTimeout(() => {
-            finish(search(engine))
-        }, 100);
-    } else {
-        invoke("/api/search", { position: engine.toString() }).then(move => {
-            finish(move)
-        })
-    }
+    if (LOCAL_AI)
+        setTimeout(() => finish(search(engine)), 100);
+    else
+        invoke("/api/search", { position: engine.toString() }).then(move => finish(move))
 }
 
-function board(c: Context) {
-    let { store, localize, text } = c
-    let { render, end, div, img } = HtmlContext(c)
+function board(c: Context, properties: { gameKey: Key }) {
+    let { store } = c
+    let { end, div, img } = HtmlContext(c)
     let appState = store.get(AppState.key)
     let { selectX, selectY } = appState
+
+    let { gameKey } = properties
+    let game = store.get(gameKey) as Game
+    let engine = game.engine
 
     let selectPos = Position.create(selectX, selectY)
     let moves = engine.generateSafeMovesAt(selectPos)
@@ -163,9 +162,9 @@ function board(c: Context) {
                     if (selected) {
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
                     } else if (highlighted && !appState.thinking) {
-                        engine.doMove(move)
+                        game.doMove(store, move)
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                        think(c)
+                        // think(c, gameKey)
                     } else {
                         if (piece.color === engine.turn || appState.debug)
                             store.patch(AppState.key, { selectX: x, selectY: y })
@@ -195,89 +194,85 @@ Context.bind(c => {
     let { render, end, div, span, iframe, h1, button } = HtmlContext(c)
     let appState = store.get(AppState.key)
 
-    let check = engine.inCheck()
-    let mate = engine.inMate()
+    const gameKey = Key.create(Game, "0")
 
-    let w = (window as any)
-    if (!w.load) {
-        w.load = (s) => {
-            engine = Engine.fromString(s)
-            store.patch(AppState.key, { selectX: -1, selectY: -1 })
-        }
-    }
-
-    let gameKey = Key.create(Game, "0")
-    if (!store.get(gameKey)) {
-        store.patch(gameKey, new Game({ key: gameKey }))
-    }
+    // let w = (window as any)
+    // if (!w.load) {
+    //     w.load = (s) => {
+    //         let engine = Engine.fromString(s)
+    //         store.patch(gameKey, { history: engine.history })
+    //         store.patch(AppState.key, { selectX: -1, selectY: -1 })
+    //     }
+    // }
 
     div({ class: "Game" })
-        div({ style: "flex-grow: 1;" }); end()
-        div({ style: "margin: 16px;" })
-            div({ style: "padding-bottom: 8px;" })
-            h1("Glass Chess")
-            end()
-            render(board)
-            div({ style: "padding-top: 8px; display: flex" })
 
-                if (!mate) {
-                    text(`Turn: ${Color[engine.turn]}${ check ? ", Check" : ""}`)
-                    // text(`Turn: ${Color[engine.turn]}, Net Material Value: ${engine.netMaterialValue}`)
-                } else {
-                    text(check ? "Checkmate!" : "Stalemate!")
-                }
-                div({ style: "flex-grow: 1" }); end()
+        let game = store.get(gameKey) as Game
+        if (!game) {
+            if (game === null)
+                store.patch(gameKey, new Game({ key: gameKey }))
+            div({ style: "padding: 4px" }, "Loading game...")
+        } else {
 
-                // div({ style: "padding: 2px; display: flex" });
-                //     text("Debug")
-                //     render(Checkbox, {
-                //         id: "debug",
-                //         value: appState.debug,
-                //         onchange(this: HTMLInputElement) {
-                //             store.patch(AppState.key, { debug: this.checked })
-                //         }
-                //     })
-                // end()
-                button({
-                    onclick() {
-                        store.patch(AppState.key, { rotate: !appState.rotate })
+            let engine = game.engine
+            let check = engine.inCheck()
+            let mate = engine.inMate()
+
+            div({ style: "flex-grow: 1;" }); end()
+            div({ style: "margin: 16px;" })
+                div({ style: "padding-bottom: 8px;" })
+                    h1("Glass Chess")
+                end()
+
+                render(board, { gameKey })
+                div({ style: "padding-top: 8px; display: flex" })
+
+                    if (!mate) {
+                        text(`Turn: ${Color[engine.turn]}${ check ? ", Check" : ""}`)
+                    } else {
+                        text(check ? "Checkmate!" : "Stalemate!")
                     }
-                }, "Rotate")
-                button({
-                    disabled: appState.thinking,
-                    onclick() {
-                        if (confirm("Reset game?")) {
-                            engine.clear()
-                            engine.standardSetup()
+                    div({ style: "flex-grow: 1" }); end()
+
+                    button({
+                        onclick() {
+                            store.patch(AppState.key, { rotate: !appState.rotate })
+                        }
+                    }, "Rotate")
+                    button({
+                        disabled: appState.thinking,
+                        onclick() {
+                            if (confirm("Reset game?")) {
+                                store.patch(gameKey, { history: [] })
+                                store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                            }
+                        }
+                    }, "Reset")
+                    button({
+                        disabled: appState.thinking,
+                        onclick() {
+                            if (engine.history.length > 0)
+                                game.undoMove(store)
                             store.patch(AppState.key, { selectX: -1, selectY: -1 })
                         }
-                    }
-                }, "Reset")
-                button({
-                    disabled: appState.thinking,
-                    onclick() {
-                        if (engine.history.length > 0)
-                            engine.undoMove()
-                        store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                    }
-                }, "Undo")
-                button({
-                    disabled: mate || appState.thinking,
-                    onclick() {
-                        think(c)
-                    }
-                }, appState.thinking ? "Thinking..." : "Think")
+                    }, "Undo")
+                    button({
+                        disabled: mate || appState.thinking,
+                        onclick: () => think(c, gameKey),
+                    }, appState.thinking ? "Thinking..." : "Think")
 
+                end()
             end()
-        end()
-        div({ style: "flex-grow: 1;" }); end()
-        if (check && mate && engine.history.length <= 10) {
-            iframe({
-                style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none",
-                width: 560, height: 315, src: "https://www.youtube.com/embed/0xKBsYVCdDk?controls=0&autoplay=1&showinfo=0",
-                frameborder: "0",  allow:"accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-            })
-            end()
+            div({ style: "flex-grow: 1;" }); end()
+            if (check && mate && engine.history.length <= 10) {
+                iframe({
+                    style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none",
+                    width: 560, height: 315, src: "https://www.youtube.com/embed/0xKBsYVCdDk?controls=0&autoplay=1&showinfo=0",
+                    frameborder: "0",  allow:"accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                })
+                end()
+            }
         }
+
     end()
 })
