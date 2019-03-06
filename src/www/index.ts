@@ -107,7 +107,8 @@ class AppState extends State {
     static key = Key.create(AppState, "0")
 }
 
-var LOCAL_AI = false
+// var LOCAL_AI = false
+var LOCAL_AI = true
 function think(store: Store, gameKey: Key) {
     let game = store.get(gameKey) as Game
     let engine = game.engine
