@@ -14,6 +14,8 @@ import { Color } from "../engine/Color"
 import Move from "../engine/Move"
 import Game from "../model/Game";
 import search from "../engine/search";
+import Store from "@krisnye/glass-platform/data/Store";
+import ServerStore from "@krisnye/glass-platform/data/stores/ServerStore";
 
 const WIDTH = 800
 const SQUARE_WIDTH = WIDTH / 8
@@ -106,17 +108,16 @@ class AppState extends State {
 }
 
 var LOCAL_AI = false
-function think(c: Context, gameKey: Key) {
-    let { store } = c
+function think(store: Store, gameKey: Key) {
     let game = store.get(gameKey) as Game
     let engine = game.engine
     if (engine.inMate())
         return
-    c.store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
+    store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
     let finish = move => {
         if (typeof move == "number")
             game.doMove(store, move)
-        c.store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
+        store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
     }
     if (LOCAL_AI)
         setTimeout(() => finish(search(engine)), 100);
@@ -164,7 +165,7 @@ function board(c: Context, properties: { gameKey: Key }) {
                     } else if (highlighted && !appState.thinking) {
                         game.doMove(store, move)
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                        // think(c, gameKey)
+                        // think(c.store, gameKey)
                     } else {
                         if (piece.color === engine.turn || appState.debug)
                             store.patch(AppState.key, { selectX: x, selectY: y })
@@ -208,6 +209,7 @@ Context.bind(c => {
     div({ class: "Game" })
 
         let game = store.get(gameKey) as Game
+        console.log(game)
         if (!game) {
             if (game === null)
                 store.patch(gameKey, new Game({ key: gameKey }))
@@ -227,17 +229,14 @@ Context.bind(c => {
                 render(board, { gameKey })
                 div({ style: "padding-top: 8px; display: flex" })
 
-                    if (!mate) {
+                    if (!mate)
                         text(`Turn: ${Color[engine.turn]}${ check ? ", Check" : ""}`)
-                    } else {
+                    else
                         text(check ? "Checkmate!" : "Stalemate!")
-                    }
                     div({ style: "flex-grow: 1" }); end()
 
                     button({
-                        onclick() {
-                            store.patch(AppState.key, { rotate: !appState.rotate })
-                        }
+                        onclick: () => store.patch(AppState.key, { rotate: !appState.rotate })
                     }, "Rotate")
                     button({
                         disabled: appState.thinking,
@@ -258,7 +257,7 @@ Context.bind(c => {
                     }, "Undo")
                     button({
                         disabled: mate || appState.thinking,
-                        onclick: () => think(c, gameKey),
+                        onclick: () => think(c.store, gameKey)
                     }, appState.thinking ? "Thinking..." : "Think")
 
                 end()
