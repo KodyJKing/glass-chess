@@ -20,16 +20,37 @@ export default class Game extends Entity {
     })
     history!: number[]
 
+    @Model.property({
+        type: "array",
+        items: {
+            type: "number"
+        },
+        default: []
+    })
+    undos!: number[]
+
     doMove(store: Store, move: number) {
         let history = this.history.slice()
         history.push(move)
-        store.patch(this.key, { history })
+        store.patch(this.key, { history, undos: [] })
     }
 
     undoMove(store: Store) {
         let history = this.history.slice()
-        history.pop()
-        store.patch(this.key, { history })
+        let undos = this.undos.slice()
+        let undo = history.pop()
+        if (undo != null)
+            undos.push(undo)
+        store.patch(this.key, { history, undos })
+    }
+
+    redoMove(store: Store) {
+        let history = this.history.slice()
+        let undos = this.undos.slice()
+        let redo = undos.pop()
+        if (redo != null)
+            history.push(redo)
+        store.patch(this.key, { history, undos })
     }
 
     get engine() {

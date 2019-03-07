@@ -106,7 +106,6 @@ class AppState extends State {
     static key = Key.create(AppState, "0")
 }
 
-// var LOCAL_AI = false
 var LOCAL_AI = true
 function think(store: Store, gameKey: Key) {
     let game = store.get(gameKey) as Game
@@ -154,6 +153,8 @@ function board(c: Context, properties: { gameKey: Key }) {
     let rotate = appState.rotate
 
     div({ class: "Board" + (rotate ? " Rotated" : "") })
+
+    // Squares
     for (let x = 0; x < 8; x++) {
         for (let y = 0; y < 8; y++) {
             let pos = Position.create(x, y)
@@ -166,8 +167,7 @@ function board(c: Context, properties: { gameKey: Key }) {
             div({
                 class: `Square ${highlighted ? "Square_highlighted" : ""}`,
                 style: `
-                        left: ${x * SQUARE_WIDTH}px;
-                        top: ${y * SQUARE_WIDTH}px;
+                        transform: translate(${x * SQUARE_WIDTH}px, ${y * SQUARE_WIDTH}px);
                         background: ${color}; `,
                 onclick() {
                     if (selected) {
@@ -175,7 +175,7 @@ function board(c: Context, properties: { gameKey: Key }) {
                     } else if (highlighted && !appState.thinking) {
                         game.doMove(store, move)
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                        think(store, gameKey)
+                        // think(store, gameKey)
                     } else {
                         if (piece.color === engine.turn || appState.debug)
                             store.patch(AppState.key, { selectX: x, selectY: y })
@@ -186,6 +186,7 @@ function board(c: Context, properties: { gameKey: Key }) {
         }
     }
 
+    // Pieces
     let pieces = getSortedPieces(engine)
     for (let guiPiece of pieces) {
         let piece = Piece.toObject(guiPiece.piece)
@@ -193,6 +194,9 @@ function board(c: Context, properties: { gameKey: Key }) {
         let colorName = Color[piece.color]
         let typeName = Type[piece.type]
         let pieceName = colorName.toLowerCase() + typeName
+
+        let highlighted = selection[guiPiece.position] !== undefined
+        let selected = x == selectX && y == selectY
         div({
             class: "Square",
             style: `
@@ -204,7 +208,7 @@ function board(c: Context, properties: { gameKey: Key }) {
             if (piece.type != Type.Empty) {
                 img({
                     src: "/pieces/" + pieceName + ".svg",
-                    class: `Piece ${rotate ? " Rotated" : ""}`,
+                    class: `Piece ${(selected || highlighted) ? "Piece_highlighted" : ""} ${rotate ? " Rotated" : ""}`,
                     draggable: false
                 })
                 end()
@@ -221,6 +225,15 @@ Context.bind(c => {
     let appState = store.get(AppState.key)
 
     const gameKey = Key.create(Game, "0")
+
+    let w = window as any
+    if (!w.load) {
+        w.load = (s) => {
+            let engine = Engine.fromString(s)
+            store.patch(gameKey, { history: engine.history, undos: [] })
+            store.patch(AppState.key, { selectX: -1, selectY: -1 })
+        }
+    }
 
     div({ class: "Game" })
 
@@ -254,22 +267,28 @@ Context.bind(c => {
                         onclick: () => store.patch(AppState.key, { rotate: !appState.rotate })
                     }, "Rotate")
                     button({
-                        disabled: appState.thinking,
+                        disabled: appState.thinking || game.history.length < 1,
                         onclick() {
                             if (confirm("Reset game?")) {
-                                store.patch(gameKey, { history: [] })
+                                store.patch(gameKey, { history: [], undos: [] })
                                 store.patch(AppState.key, { selectX: -1, selectY: -1 })
                             }
                         }
                     }, "Reset")
                     button({
-                        disabled: appState.thinking,
+                        disabled: appState.thinking || game.history.length < 1,
                         onclick() {
-                            if (engine.history.length > 0)
-                                game.undoMove(store)
+                            game.undoMove(store)
                             store.patch(AppState.key, { selectX: -1, selectY: -1 })
                         }
                     }, "Undo")
+                    button({
+                        disabled: appState.thinking || game.undos.length < 1,
+                        onclick() {
+                            game.redoMove(store)
+                            store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                        }
+                    }, "Redo")
                     button({
                         disabled: mate || appState.thinking,
                         onclick: () => think(c.store, gameKey)
