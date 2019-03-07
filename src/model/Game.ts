@@ -29,28 +29,28 @@ export default class Game extends Entity {
     })
     undos!: number[]
 
-    doMove(store: Store, move: number) {
+    doMove(move: number) {
         let history = this.history.slice()
         history.push(move)
-        store.patch(this.key, { history, undos: [] })
+        Store.default.patch(this.key, { history, undos: [] })
     }
 
-    undoMove(store: Store) {
+    undoMove() {
         let history = this.history.slice()
         let undos = this.undos.slice()
         let undo = history.pop()
         if (undo != null)
             undos.push(undo)
-        store.patch(this.key, { history, undos })
+        Store.default.patch(this.key, { history, undos })
     }
 
-    redoMove(store: Store) {
+    redoMove() {
         let history = this.history.slice()
         let undos = this.undos.slice()
         let redo = undos.pop()
         if (redo != null)
             history.push(redo)
-        store.patch(this.key, { history, undos })
+        Store.default.patch(this.key, { history, undos })
     }
 
     get engine() {

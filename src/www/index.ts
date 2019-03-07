@@ -22,9 +22,6 @@ const OUTLINE = "#256F46"
 
 Stylesheets.add(t => `
     .Game {
-        display: grid;
-        grid-template-columns: auto calc(100vmin - 124px) auto;
-        grid-template-rows: auto calc(100vmin - 124px) auto;
         width: 100vw;
         height: 100vh;
         position: absolute;
@@ -101,21 +98,24 @@ class AppState extends State {
     @Model.property({ type: "boolean", default: false })
     thinking!: boolean
 
+    @Model.property({ type: "object" })
+    windowSize!: { width: number, height: number }
+
     static readonly store = "memory"
     static key = Key.create(AppState, "0")
 }
 
 var LOCAL_AI = true
-function think(store: Store, gameKey: Key) {
-    let game = store.get(gameKey) as Game
+function think(gameKey: Key) {
+    let game = Store.default.get(gameKey) as Game
     let engine = game.engine
     if (engine.inMate())
         return
-    store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
+    Store.default.patch(AppState.key, { selectX: -1, selectY: -1, thinking: true })
     let finish = move => {
         if (typeof move == "number")
-            game.doMove(store, move)
-        store.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
+            game.doMove(move)
+        Store.default.patch(AppState.key, { selectX: -1, selectY: -1, thinking: false })
     }
     if (LOCAL_AI)
         setTimeout(() => finish(search(engine)), 100);
@@ -134,7 +134,7 @@ function getSortedPieces(engine: Engine) {
 }
 
 function board(c: Context, properties: { gameKey: Key }) {
-    let { store } = c
+    let store = Store.default
     let { end, div, img } = HtmlContext(c)
     let appState = store.get(AppState.key)
     let { selectX, selectY } = appState
@@ -173,9 +173,9 @@ function board(c: Context, properties: { gameKey: Key }) {
                     if (selected) {
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
                     } else if (highlighted && !appState.thinking) {
-                        game.doMove(store, move)
+                        game.doMove(move)
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                        // think(store, gameKey)
+                        // think(gameKey)
                     } else {
                         if (piece.color === engine.turn || appState.debug)
                             store.patch(AppState.key, { selectX: x, selectY: y })
@@ -220,23 +220,26 @@ function board(c: Context, properties: { gameKey: Key }) {
     end()
 }
 
+function onResize() {
+    let windowSize = { width: window.innerWidth, height: window.innerHeight }
+    Store.default.patch(AppState.key, { windowSize })
+}
+window.addEventListener("resize", onResize)
+onResize()
+
 Context.bind(c => {
-    let { store, localize, text } = c
-    let { render, end, div, span, iframe, h1, button } = HtmlContext(c)
+    let store = Store.default
+    let { render, end, div, span, iframe, h1, button, text } = HtmlContext(c)
     let appState = store.get(AppState.key)
 
     const gameKey = Key.create(Game, "0")
 
-    let w = window as any
-    if (!w.load) {
-        w.load = (s) => {
-            let engine = Engine.fromString(s)
-            store.patch(gameKey, { history: engine.history, undos: [] })
-            store.patch(AppState.key, { selectX: -1, selectY: -1 })
-        }
-    }
-
-    div({ class: "Game" })
+    let boardWidth = Math.min((appState.windowSize.height - 124), appState.windowSize.width)
+    div({ class: "Game", style: `
+        display: grid;
+        grid-template-columns: auto ${boardWidth}px auto;
+        grid-template-rows: 80px ${boardWidth}px 40px;
+    ` })
 
         div({ style: "grid-column: 2 / 2" })
             h1("Glass Chess")
@@ -277,20 +280,20 @@ Context.bind(c => {
                 button({
                     disabled: appState.thinking || game.history.length < 1,
                     onclick() {
-                        game.undoMove(store)
+                        game.undoMove()
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
                     }
                 }, "Undo")
                 button({
                     disabled: appState.thinking || game.undos.length < 1,
                     onclick() {
-                        game.redoMove(store)
+                        game.redoMove()
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
                     }
                 }, "Redo")
                 button({
                     disabled: mate || appState.thinking,
-                    onclick: () => think(c.store, gameKey)
+                    onclick: () => think(gameKey)
                 }, appState.thinking ? "Thinking..." : "Think")
             end()
 
