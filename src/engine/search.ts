@@ -142,9 +142,8 @@ export default function(engine: Engine, options: any = {}) {
     if (options.rootCall) {
         let dt = (Date.now() - startTime)
         let addCommas = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-        engine.totalSearchTime += dt
         let evalsPerMs = (evaluations / dt).toString().split(".")[0]
-        console.log(`${addCommas(evaluations)} evals | ${addCommas(dt)} ms | ${addCommas(evalsPerMs)} evals/ms | total search time: ${addCommas(engine.totalSearchTime)} ms`)
+        console.log(`${addCommas(evaluations)} evals | ${addCommas(dt)} ms | ${addCommas(evalsPerMs)} evals/ms`)
     }
 
     return options.rootCall ? result : resultValue

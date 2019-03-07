@@ -15,7 +15,6 @@ import Move from "../engine/Move"
 import Game from "../model/Game";
 import search from "../engine/search";
 import Store from "@krisnye/glass-platform/data/Store";
-import ServerStore from "@krisnye/glass-platform/data/stores/ServerStore";
 
 const WIDTH = 800
 const SQUARE_WIDTH = WIDTH / 8
@@ -126,6 +125,16 @@ function think(store: Store, gameKey: Key) {
         invoke("/api/search", { position: engine.toString() }).then(move => finish(move))
 }
 
+type GUIPiece = {position: number, piece: number, id: number}
+function getSortedPieces(engine: Engine) {
+    let result: GUIPiece[] = []
+    for (let p = 0; p < 64; p++) {
+        let piece = engine.pieces[p]
+        result.push({ position: p, piece, id: engine.ids[p] })
+    }
+    return result.sort((p, q) => p.id - q.id)
+}
+
 function board(c: Context, properties: { gameKey: Key }) {
     let { store } = c
     let { end, div, img } = HtmlContext(c)
@@ -166,28 +175,43 @@ function board(c: Context, properties: { gameKey: Key }) {
                     } else if (highlighted && !appState.thinking) {
                         game.doMove(store, move)
                         store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                        // think(c.store, gameKey)
+                        think(store, gameKey)
                     } else {
                         if (piece.color === engine.turn || appState.debug)
                             store.patch(AppState.key, { selectX: x, selectY: y })
                     }
                 }
             })
+            end()
+        }
+    }
+
+    let pieces = getSortedPieces(engine)
+    for (let guiPiece of pieces) {
+        let piece = Piece.toObject(guiPiece.piece)
+        let {x, y} = Position.toObject(guiPiece.position)
+        let colorName = Color[piece.color]
+        let typeName = Type[piece.type]
+        let pieceName = colorName.toLowerCase() + typeName
+        div({
+            class: "Square",
+            style: `
+                    transform: translate(${x * SQUARE_WIDTH}px, ${y * SQUARE_WIDTH}px);
+                    transition: transform .2s ease-in-out;
+                    z-index: ${piece.type == Type.Knight ? 3 : 2};
+                    pointer-events: none`
+        })
             if (piece.type != Type.Empty) {
-                let colorName = Color[piece.color]
-                let typeName = Type[piece.type]
-                let pieceName = colorName.toLowerCase() + typeName
                 img({
                     src: "/pieces/" + pieceName + ".svg",
-                    class: `Piece ${(selected || highlighted) ? "Piece_highlighted" : ""} ${rotate ? " Rotated" : ""}`,
+                    class: `Piece ${rotate ? " Rotated" : ""}`,
                     draggable: false
                 })
                 end()
             }
-            end()
-
-        }
+        end()
     }
+
     end()
 }
 
@@ -198,21 +222,11 @@ Context.bind(c => {
 
     const gameKey = Key.create(Game, "0")
 
-    // let w = (window as any)
-    // if (!w.load) {
-    //     w.load = (s) => {
-    //         let engine = Engine.fromString(s)
-    //         store.patch(gameKey, { history: engine.history })
-    //         store.patch(AppState.key, { selectX: -1, selectY: -1 })
-    //     }
-    // }
-
     div({ class: "Game" })
 
         let game = store.get(gameKey) as Game
-        console.log(game)
         if (!game) {
-            if (game === null)
+            if (Game.store as string != "server" || game === null)
                 store.patch(gameKey, new Game({ key: gameKey }))
             div({ style: "padding: 4px" }, "Loading game...")
         } else {

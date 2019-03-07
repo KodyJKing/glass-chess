@@ -19,10 +19,10 @@ export class Engine {
     // Representation
 
     pieces!: Uint8Array
+    ids!: Uint8Array
     turn!: Color
     netMaterialValue!: number
     history!: number[]
-    totalSearchTime = 0
     constructor() {
         try { (window as any).engine = this } catch (e) {}
         this.clear()
@@ -30,10 +30,12 @@ export class Engine {
 
     clear() {
         this.pieces = new Uint8Array(64)
+        this.ids = new Uint8Array(64)
+        for (let i = 0; i < 64; i++)
+            this.ids[i] = i
         this.turn = Color.White
         this.netMaterialValue = 0
         this.history = []
-        this.totalSearchTime = 0
     }
 
     standardSetup() {
@@ -262,10 +264,12 @@ export class Engine {
             let rook = this.pieces[rookTo]
             this.pieces[rookFrom] = Piece.set.moved(rook, 0)
             this.pieces[rookTo] = EMPTY
+            this.swapIds(rookFrom, rookTo)
         } else {
             let rook = this.pieces[rookFrom]
             this.pieces[rookFrom] = EMPTY
             this.pieces[rookTo] = Piece.set.moved(rook, 1)
+            this.swapIds(rookFrom, rookTo)
         }
     }
 
@@ -274,6 +278,12 @@ export class Engine {
         this.netMaterialValue -= pieceValues[Piece.get.type(captured)] * (Piece.get.color(captured) == Color.White ? 1 : -1)
         this.netMaterialValue += pieceValues[Piece.get.type(piece)] * (Piece.get.color(piece) == Color.White ? 1 : -1)
         this.pieces[pos] = piece
+    }
+
+    swapIds(p: number, q: number) {
+        let tmp = this.ids[p]
+        this.ids[p] = this.ids[q]
+        this.ids[q] = tmp
     }
 
     doMove(move: number) {
@@ -288,6 +298,8 @@ export class Engine {
         this.setPiece(from, EMPTY)
         this.setPiece(to, piece)
         this.turn = (this.turn + 1) % 2
+
+        this.swapIds(to, from)
 
         if (Piece.get.type(piece) === Type.King)
             this.tryCastle(to, from, false)
@@ -305,6 +317,8 @@ export class Engine {
         this.setPiece(from, piece)
         this.setPiece(to, Move.get.captured(move))
         this.turn = (this.turn + 1) % 2
+
+        this.swapIds(to, from)
 
         if (Piece.get.type(piece) === Type.King)
             this.tryCastle(to, from, true)
