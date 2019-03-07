@@ -23,8 +23,8 @@ const OUTLINE = "#256F46"
 Stylesheets.add(t => `
     .Game {
         display: grid;
-        grid-template-columns: auto calc(100vmin - 125px) auto;
-        grid-template-rows: auto calc(100vmin - 125px) auto;
+        grid-template-columns: auto calc(100vmin - 124px) auto;
+        grid-template-rows: auto calc(100vmin - 124px) auto;
         width: 100vw;
         height: 100vh;
         position: absolute;
@@ -200,8 +200,9 @@ function board(c: Context, properties: { gameKey: Key }) {
         div({
             class: "Square",
             style: `
-                    transform: translate(${x * 100}%, ${y * 100}%);
-                    transition: transform .2s ease-in-out;
+                    left: ${x * 100 / 8}%;
+                    top: ${y * 100 / 8}%;
+                    transition: all .2s ease-in-out;
                     z-index: ${piece.type == Type.Knight ? 3 : 2};
                     pointer-events: none`
         })
@@ -237,20 +238,20 @@ Context.bind(c => {
 
     div({ class: "Game" })
 
+        div({ style: "grid-column: 2 / 2" })
+            h1("Glass Chess")
+        end()
+
         let game = store.get(gameKey) as Game
         if (!game) {
             if (Game.store as string != "server" || game === null)
                 store.patch(gameKey, new Game({ key: gameKey }))
-            div({ style: "padding: 4px" }, "Loading game...")
+            div({ style: "padding: 4px; grid-column: 2 / 2; grid-row: 2 / 2" }, "Loading game...")
         } else {
 
             let engine = game.engine
             let check = engine.inCheck()
             let mate = engine.inMate()
-
-            div({ style: "grid-column: 2 / 2" })
-                h1("Glass Chess")
-            end()
 
             render(board, { gameKey })
 
