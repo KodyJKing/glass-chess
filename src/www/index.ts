@@ -16,16 +16,15 @@ import Game from "../model/Game";
 import search from "../engine/search";
 import Store from "@krisnye/glass-platform/data/Store";
 
-const WIDTH = 800
-const SQUARE_WIDTH = WIDTH / 8
-
 const WHITE = "darkseagreen"
 const BLACK = "seagreen"
 const OUTLINE = "#256F46"
 
 Stylesheets.add(t => `
     .Game {
-        display: flex;
+        display: grid;
+        grid-template-columns: auto calc(100vmin - 125px) auto;
+        grid-template-rows: auto calc(100vmin - 125px) auto;
         width: 100vw;
         height: 100vh;
         position: absolute;
@@ -38,8 +37,8 @@ Stylesheets.add(t => `
 
     .Board {
         position: relative;
-        width: ${WIDTH}px;
-        height: ${WIDTH}px;
+        grid-column: 2 / 2;
+        grid-row: 2 / 2;
         background: ${t.colors.background.light};
         overflow: hidden;
         border-radius: 8px;
@@ -53,8 +52,8 @@ Stylesheets.add(t => `
 
     .Square {
         position: absolute;
-        width: ${SQUARE_WIDTH}px;
-        height: ${SQUARE_WIDTH}px;
+        width: calc(100% / 8);
+        height: calc(100% / 8);
         display: flex;
     }
 
@@ -65,8 +64,8 @@ Stylesheets.add(t => `
         margin-left: 1.5px;
         margin-top: 1.5px;
         outline: ${OUTLINE} 3px solid;
-        width: ${SQUARE_WIDTH - 3}px;
-        height: ${SQUARE_WIDTH - 3}px;
+        width: calc(100% / 8 - 3px);
+        height: calc(100% / 8 - 3px);
     }
 
     .Piece {
@@ -167,7 +166,8 @@ function board(c: Context, properties: { gameKey: Key }) {
             div({
                 class: `Square ${highlighted ? "Square_highlighted" : ""}`,
                 style: `
-                        transform: translate(${x * SQUARE_WIDTH}px, ${y * SQUARE_WIDTH}px);
+                        left: ${x * 100 / 8}%;
+                        top: ${y * 100 / 8}%;
                         background: ${color}; `,
                 onclick() {
                     if (selected) {
@@ -200,7 +200,7 @@ function board(c: Context, properties: { gameKey: Key }) {
         div({
             class: "Square",
             style: `
-                    transform: translate(${x * SQUARE_WIDTH}px, ${y * SQUARE_WIDTH}px);
+                    transform: translate(${x * 100}%, ${y * 100}%);
                     transition: transform .2s ease-in-out;
                     z-index: ${piece.type == Type.Knight ? 3 : 2};
                     pointer-events: none`
@@ -248,55 +248,51 @@ Context.bind(c => {
             let check = engine.inCheck()
             let mate = engine.inMate()
 
-            div({ style: "flex-grow: 1;" }); end()
-            div({ style: "margin: 16px;" })
-                div({ style: "padding-bottom: 8px;" })
-                    h1("Glass Chess")
-                end()
-
-                render(board, { gameKey })
-                div({ style: "padding-top: 8px; display: flex" })
-
-                    if (!mate)
-                        text(`Turn: ${Color[engine.turn]}${ check ? ", Check" : ""}`)
-                    else
-                        text(check ? "Checkmate!" : "Stalemate!")
-                    div({ style: "flex-grow: 1" }); end()
-
-                    button({
-                        onclick: () => store.patch(AppState.key, { rotate: !appState.rotate })
-                    }, "Rotate")
-                    button({
-                        disabled: appState.thinking || game.history.length < 1,
-                        onclick() {
-                            if (confirm("Reset game?")) {
-                                store.patch(gameKey, { history: [], undos: [] })
-                                store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                            }
-                        }
-                    }, "Reset")
-                    button({
-                        disabled: appState.thinking || game.history.length < 1,
-                        onclick() {
-                            game.undoMove(store)
-                            store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                        }
-                    }, "Undo")
-                    button({
-                        disabled: appState.thinking || game.undos.length < 1,
-                        onclick() {
-                            game.redoMove(store)
-                            store.patch(AppState.key, { selectX: -1, selectY: -1 })
-                        }
-                    }, "Redo")
-                    button({
-                        disabled: mate || appState.thinking,
-                        onclick: () => think(c.store, gameKey)
-                    }, appState.thinking ? "Thinking..." : "Think")
-
-                end()
+            div({ style: "grid-column: 2 / 2" })
+                h1("Glass Chess")
             end()
-            div({ style: "flex-grow: 1;" }); end()
+
+            render(board, { gameKey })
+
+            div({ style: "display: flex; padding: 8px; height: 20pt; grid-column: 2 / 2; grid-row: 3 / 3" })
+                if (!mate)
+                    text(`Turn: ${Color[engine.turn]}${ check ? ", Check" : ""}`)
+                else
+                    text(check ? "Checkmate!" : "Stalemate!")
+                div({ style: "flex-grow: 1" }); end()
+
+                button({
+                    onclick: () => store.patch(AppState.key, { rotate: !appState.rotate })
+                }, "Rotate")
+                button({
+                    disabled: appState.thinking || (game.history.length < 1 && game.undos.length < 1),
+                    onclick() {
+                        if (confirm("Reset game?")) {
+                            store.patch(gameKey, { history: [], undos: [] })
+                            store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                        }
+                    }
+                }, "Reset")
+                button({
+                    disabled: appState.thinking || game.history.length < 1,
+                    onclick() {
+                        game.undoMove(store)
+                        store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                    }
+                }, "Undo")
+                button({
+                    disabled: appState.thinking || game.undos.length < 1,
+                    onclick() {
+                        game.redoMove(store)
+                        store.patch(AppState.key, { selectX: -1, selectY: -1 })
+                    }
+                }, "Redo")
+                button({
+                    disabled: mate || appState.thinking,
+                    onclick: () => think(c.store, gameKey)
+                }, appState.thinking ? "Thinking..." : "Think")
+            end()
+
             if (check && mate && engine.history.length <= 10) {
                 iframe({
                     style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none",

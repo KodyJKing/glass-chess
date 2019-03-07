@@ -93,10 +93,10 @@
     stream-events "^1.0.4"
     through2 "^2.0.3"
 
-"@krisnye/glass-platform@*":
-  version "0.0.9"
-  resolved "https://registry.yarnpkg.com/@krisnye/glass-platform/-/glass-platform-0.0.9.tgz#24611bffc5d2584f3f7bd686e56dfcf959349888"
-  integrity sha512-EFGMYs8NiULzV+oWHRs3e+cF5CfYoGiBceYZiJFVV4lgq/SDbyeXD2H1hXlbmCz0WVTSaeoQZ60Ixt/FuHG5gg==
+"@krisnye/glass-platform@0.0.12":
+  version "0.0.12"
+  resolved "https://registry.yarnpkg.com/@krisnye/glass-platform/-/glass-platform-0.0.12.tgz#072db6a5cc885a4b81fae8f64bccfb778a66990d"
+  integrity sha512-DSbrEgy+mBzxn91JOJsC8Dkf6cvwWFNBhXln10FM8+Emlbe40Y4Ju4QJFbJzJ+bEuitB9iHM+sdyy+UWgzYmjg==
   dependencies:
     "@google-cloud/datastore" "^1.4.2"
     "@sendgrid/mail" "^6.3.1"
