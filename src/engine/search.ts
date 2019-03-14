@@ -10,11 +10,13 @@ const Pos = Position.create
 const MAX_VALUE = Number.MAX_SAFE_INTEGER // Infinity
 
 export default function(engine: Engine, options: any = {}) {
-    options = Object.assign({ depth: 6, rootCall: true }, options)
+    options = Object.assign({ depth: 40, rootCall: true, maxSeconds: 5 }, options)
 
     let startTime = Date.now()
+    let endTime = startTime + options.maxSeconds * 1000
     let evaluations = 0
     let cache = options.cache || new Map<string, number>()
+
 
     const heuristic = (useFast) => {
         evaluations++
@@ -33,6 +35,9 @@ export default function(engine: Engine, options: any = {}) {
 
         if (useFast)
             return engine.netMaterialValue * config.material
+
+        if (engine.inMate())
+            return 0
 
         let control = 0
         let threat = 0
@@ -96,6 +101,7 @@ export default function(engine: Engine, options: any = {}) {
         let turn = engine.turn
         let valueSign = (engine.turn === Color.White) ? 1 : -1
 
+
         let positionString = engine.positionString() + depth + "," + turn
         if (!rootCall && cache.has(positionString))
             return cache.get(positionString) as number
@@ -112,6 +118,8 @@ export default function(engine: Engine, options: any = {}) {
         let bestValue = -MAX_VALUE * valueSign
         let cutoff = false
         for (let [move, h] of pairs) {
+            if (Date.now() > endTime)
+                break
             let value = 0
             engine.doMove(move)
                 value = depth == 1 ? h : (search(depth - 1, false, alpha, beta) as number)
@@ -137,13 +145,20 @@ export default function(engine: Engine, options: any = {}) {
         return rootCall ? [best, bestValue]: bestValue
     }
 
-    let [result, resultValue] = search(options.depth) as number[]
+    let result, resultValue, depthReached
+    for (let d = 3; d <= options.depth; d++) {
+        let _ = search(d) as number[]
+        if (Date.now() > endTime)
+            break
+        [result, resultValue] = _
+        depthReached = d
+    }
 
     if (options.rootCall) {
         let dt = (Date.now() - startTime)
         let addCommas = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
         let evalsPerMs = (evaluations / dt).toString().split(".")[0]
-        console.log(`${addCommas(evaluations)} evals | ${addCommas(dt)} ms | ${addCommas(evalsPerMs)} evals/ms`)
+        console.log(`${addCommas(evaluations)} evals | ${addCommas(dt)} ms | ${addCommas(evalsPerMs)} evals/ms | depth ${depthReached} reached`)
     }
 
     return options.rootCall ? result : resultValue

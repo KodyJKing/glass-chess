@@ -202,7 +202,8 @@ function board(c: Context, properties: { gameKey: Key }) {
             style: `
                     left: ${x * 100 / 8}%;
                     top: ${y * 100 / 8}%;
-                    transition: all .2s ease-in-out;
+                    opacity: ${piece.type == Type.Empty ? 0 : 1};
+                    transition: all 0.25s ease-in-out;
                     z-index: ${piece.type == Type.Knight ? 3 : 2};
                     pointer-events: none`
         })
@@ -233,6 +234,15 @@ Context.bind(c => {
     let appState = store.get(AppState.key)
 
     const gameKey = Key.create(Game, "0")
+
+    let w = window as any
+    if (!w.load) {
+        w.load = (s) => {
+            let engine = Engine.fromString(s)
+            store.patch(gameKey, { history: engine.history, undos: [] })
+            store.patch(AppState.key, { selectX: -1, selectY: -1 })
+        }
+    }
 
     let boardWidth = Math.min((appState.windowSize.height - 124), appState.windowSize.width)
     div({ class: "Game", style: `
@@ -299,7 +309,7 @@ Context.bind(c => {
 
             if (check && mate && engine.history.length <= 10) {
                 iframe({
-                    style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none",
+                    style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 4",
                     width: 560, height: 315, src: "https://www.youtube.com/embed/0xKBsYVCdDk?controls=0&autoplay=1&showinfo=0",
                     frameborder: "0",  allow:"accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                 })
