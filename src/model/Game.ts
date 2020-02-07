@@ -1,13 +1,14 @@
-import Key, { ModelKey } from "@krisnye/glass-platform/data/Key"
-import Model from "@krisnye/glass-platform/data/Model"
-import Entity from "@krisnye/glass-platform/data/Entity"
+import Key, { ModelKey } from "@glas/platform/data/Key"
+import Model from "@glas/platform/data/Model"
+import Entity from "@glas/platform/data/Entity"
 import { Engine } from "../engine/Engine";
-import Store from "@krisnye/glass-platform/data/Store";
+import Store from "@glas/platform/data/Store";
 
 @Model.class()
 export default class Game extends Entity {
 
-    static readonly store = "server"
+    // static readonly store = "server"
+    static readonly store = "local"
 
     key!: ModelKey<Game>
 

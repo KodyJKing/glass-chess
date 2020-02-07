@@ -1,11 +1,12 @@
 
 // must add local build path to node paths
-module.paths.push("/home/kody/code/glass/build/node_modules")
+module.paths.push("C:\\code\\TS\\xpoint\\build\\node_modules")
+
 const path = require("path") 
 const webroot = path.join(process.cwd(), "./lib/www")
-const webpack = require("webpack")
+const webpack = require("C:\\code\\TS\\xpoint\\build\\node_modules\\webpack")
 let config = {
-    entry: {"index":"./lib/www/index.js"},
+    entry: {"api\\search":"./lib/www/api\\search.js","index":"./lib/www/index.js"},
     output: {
         path: webroot,
         filename: "[name].pack.js",
@@ -27,26 +28,32 @@ let config = {
         rules: [
             {
                 test: /.svg$/,
-                loader: 'file-loader'
-            }
+                loader: "C:\\code\\TS\\xpoint\\build\\node_modules\\file-loader"
+            },
+            {
+                test: /.css$/,
+                use: ["C:\\code\\TS\\xpoint\\build\\node_modules\\style-loader", "C:\\code\\TS\\xpoint\\build\\node_modules\\css-loader"],
+            },
+            {
+                test: /.(glsl|vert|frag)$/,
+                loader: "C:\\code\\TS\\xpoint\\build\\node_modules\\raw-loader",
+            },
         ]
     },
     //  ignore the node "crypto" which is required by sjcl
     plugins: [
-        new webpack.IgnorePlugin(/^crypto$/),
-        new webpack.HotModuleReplacementPlugin()
+        new webpack.IgnorePlugin(/^crypto$/)
     ]
 }
 
 module.exports = (env, argv) => {
-
     if (argv.mode === "development") {
         console.log("DEVELOPMENT")
     } else if (argv.mode === "production") {
         console.log("PRODUCTION")
-    } else {
+    } else if (argv.mode === "debug") {
         console.log("DEBUG")
-        const BundleAnalyzer = require("webpack-bundle-analyzer").BundleAnalyzerPlugin
+        const BundleAnalyzer = require("C:\\code\\TS\\xpoint\\build\\node_modules\\webpack-bundle-analyzer").BundleAnalyzerPlugin
         config.plugins.push(new BundleAnalyzer())
     }
 

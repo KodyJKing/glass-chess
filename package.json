@@ -1,20 +1,21 @@
 {
-    "name": "glass-232302",
+    "name": "glass-chess",
     "version": "0.0.0",
     "repository": "https://github.com/krisnye/glass-chess.git",
     "author": "Kody King <kody.j.king@gmail.com>",
-    "license": "none",
+    "license": "UNLICENSED",
     "scripts": {
+        "setup": "yarn install && guild link",
         "start": "node lib/server.js",
-        "webpack": "webpack"
+        "watch": "guild watch",
+        "clean": "guild clean"
     },
     "private": true,
-    "devDependencies": {
-        "@types/express": "^4.16.0",
-        "ava": "^0.25.0"
-    },
     "dependencies": {
-        "@krisnye/glass-platform": "0.0.12",
-        "express": "^4.16.4"
+        "@glas/platform": "*"
+    },
+    "devDependencies": {
+        "@glas/build": "^0.2.3",
+        "ava": "^1.0.1"
     }
 }
