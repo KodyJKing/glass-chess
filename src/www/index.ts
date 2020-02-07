@@ -12,9 +12,11 @@ import Piece from "../engine/Piece"
 import { Type } from "../engine/Type"
 import { Color } from "../engine/Color"
 import Move from "../engine/Move"
-import Game from "../model/Game";
-import search from "../engine/search";
-import Store from "@glas/platform/data/Store";
+import Game from "../model/Game"
+import search from "../engine/search"
+import Store from "@glas/platform/data/Store"
+
+import piecesSvg from "./pieces"
 
 const WHITE = "darkseagreen"
 const BLACK = "seagreen"
@@ -47,6 +49,7 @@ class AppState extends State {
     static key = Key.create(AppState, "0")
 }
 
+// TODO: Fix the search api. It broke after porting to the new glass.
 var LOCAL_AI = true
 function think(gameKey: Key) {
     let game = Store.default.get(gameKey) as Game
@@ -150,7 +153,7 @@ const board = Context.component(function board(c: Context, properties: { gameKey
                     content: () => {
                         if (piece.type != Type.Empty) {
                             img({
-                                src: "/pieces/" + pieceName + ".svg",
+                                src: piecesSvg[pieceName], //"/pieces/" + pieceName + ".svg",
                                 class: `Piece ${(selected || highlighted) ? "Piece_highlighted" : ""} ${rotate ? " Rotated" : ""}`,
                                 draggable: false
                             })

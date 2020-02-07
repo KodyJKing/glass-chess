@@ -6,7 +6,7 @@ const path = require("path")
 const webroot = path.join(process.cwd(), "./lib/www")
 const webpack = require("C:\\code\\TS\\xpoint\\build\\node_modules\\webpack")
 let config = {
-    entry: {"api\\search":"./lib/www/api\\search.js","index":"./lib/www/index.js"},
+    entry: {"api\\search":"./lib/www/api\\search.js","index":"./lib/www/index.js","pieces\\index":"./lib/www/pieces\\index.js"},
     output: {
         path: webroot,
         filename: "[name].pack.js",

@@ -8,7 +8,8 @@
         "setup": "yarn install && guild link",
         "start": "node lib/server.js",
         "watch": "guild watch",
-        "clean": "guild clean"
+        "clean": "guild clean",
+        "githpage": "guild webpack && rm -rf githubpage && cp -r lib/www githubpage"
     },
     "private": true,
     "dependencies": {
