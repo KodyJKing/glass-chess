@@ -1,2 +1,2 @@
 # glass-chess
-Chess Game built on the Glass Platform
+Chess engine and game built on the Glass Platform
